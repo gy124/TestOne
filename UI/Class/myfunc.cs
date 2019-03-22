@@ -21,8 +21,6 @@ using System.ComponentModel;
 
 namespace UI
 {
-   
-    //运动函数委托
     public delegate EM_RES Mact(ref bool bquit);
     public delegate void MsgShow(string msg = "");
     public delegate EM_RES CAMERA(out ST_XYZ res, int camera_id = 1);
