@@ -1,0 +1,417 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{77C148F5-418A-4FB4-AF50-DEB5934664E3}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>UI</RootNamespace>
+    <AssemblyName>PickAndPlace</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>
+    </ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64_Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86_Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Common">
+      <HintPath>..\Other\Common.dll</HintPath>
+    </Reference>
+    <Reference Include="NModbus4, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NModbus4.2.1.0\lib\net40\NModbus4.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="QWhale.Common, Version=1.62.4104.36375, Culture=neutral, PublicKeyToken=da632fd1713dff10" />
+    <Reference Include="QWhale.Editor, Version=1.62.4104.36377, Culture=neutral, PublicKeyToken=da632fd1713dff10" />
+    <Reference Include="QWhale.Syntax, Version=1.62.4104.36376, Culture=neutral, PublicKeyToken=da632fd1713dff10" />
+    <Reference Include="QWhale.Syntax.Parsers, Version=1.62.4104.36376, Culture=neutral, PublicKeyToken=da632fd1713dff10" />
+    <Reference Include="SocketHelper, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SocketHelper\bin\Debug\SocketHelper.dll</HintPath>
+    </Reference>
+    <Reference Include="stdole, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="WindowsFormsIntegration" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Class\myfunc.cs" />
+    <Compile Include="Class\Product.cs" />
+    <Compile Include="Compment\com.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Compment\com.Designer.cs">
+      <DependentUpon>com.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Compment\CTabControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Compment\DownLoad.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Compment\DownLoad.Designer.cs">
+      <DependentUpon>DownLoad.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Compment\LightBox.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Compment\LightBox.Designer.cs">
+      <DependentUpon>LightBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Compment\MyProcessbar.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Compment\RowMergeView.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Compment\RowMergeView.designer.cs">
+      <DependentUpon>RowMergeView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Compment\TableLayout.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Compment\TableLayout.Designer.cs">
+      <DependentUpon>TableLayout.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Compment\traybox.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Compment\traybox.Designer.cs">
+      <DependentUpon>traybox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Compment\UpLoad.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Compment\UpLoad.Designer.cs">
+      <DependentUpon>UpLoad.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Compment\tray_btn.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Compment\tray_btn.Designer.cs">
+      <DependentUpon>tray_btn.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Compment\tray.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Compment\tray.Designer.cs">
+      <DependentUpon>tray.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormView\Vison.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\Vison.Designer.cs">
+      <DependentUpon>Vison.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormView\FrMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\FrMain.Designer.cs">
+      <DependentUpon>FrMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormView\FrSys.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\FrSys.Designer.cs">
+      <DependentUpon>FrSys.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormView\FrProduct.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\FrProduct.Designer.cs">
+      <DependentUpon>FrProduct.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormView\FrRst.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\FrRst.Designer.cs">
+      <DependentUpon>FrRst.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormView\FrRun.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\FrRun.Designer.cs">
+      <DependentUpon>FrRun.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormView\FrUser.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\FrUser.Designer.cs">
+      <DependentUpon>FrUser.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormView\warning.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\warning.Designer.cs">
+      <DependentUpon>warning.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UserControl1.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserControl1.Designer.cs">
+      <DependentUpon>UserControl1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UserControl2.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserControl2.Designer.cs">
+      <DependentUpon>UserControl2.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="Compment\com.resx">
+      <DependentUpon>com.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Compment\CTabControl.resx">
+      <DependentUpon>CTabControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Compment\DownLoad.resx">
+      <DependentUpon>DownLoad.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Compment\LightBox.resx">
+      <DependentUpon>LightBox.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Compment\RowMergeView.resx">
+      <DependentUpon>RowMergeView.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Compment\traybox.resx">
+      <DependentUpon>traybox.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Compment\UpLoad.resx">
+      <DependentUpon>UpLoad.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Compment\tray_btn.resx">
+      <DependentUpon>tray_btn.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Compment\tray.resx">
+      <DependentUpon>tray.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormView\FrMain.resx">
+      <DependentUpon>FrMain.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormView\FrSys.resx">
+      <DependentUpon>FrSys.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormView\FrProduct.resx">
+      <DependentUpon>FrProduct.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormView\FrRst.resx">
+      <DependentUpon>FrRst.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormView\FrRun.resx">
+      <DependentUpon>FrRun.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormView\FrUser.resx">
+      <DependentUpon>FrUser.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormView\Vison.resx">
+      <DependentUpon>Vison.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormView\warning.resx">
+      <DependentUpon>warning.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <EmbeddedResource Include="UserControl1.resx">
+      <DependentUpon>UserControl1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserControl2.resx">
+      <DependentUpon>UserControl2.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.5.2 %28x86 和 x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\cw.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\微信图片_20180426142057.jpg" />
+    <None Include="Resources\matte_white_square_icon_arrows_arrow_down_96px_570777_easyicon.net.ico" />
+    <None Include="Resources\matte_white_square_icon_arrows_arrow_left_96px_570778_easyicon.net.ico" />
+    <None Include="Resources\matte_white_square_icon_arrows_arrow_redo_96px_570747_easyicon.net.ico" />
+    <None Include="Resources\matte_white_square_icon_arrows_arrow_right_96px_570779_easyicon.net.ico" />
+    <None Include="Resources\matte_white_square_icon_arrows_arrow_undo_96px_570760_easyicon.net.ico" />
+    <None Include="Resources\matte_white_square_icon_arrows_arrow_up_96px_570761_easyicon.net.ico" />
+    <None Include="Resources\left_arrow_24px_1145535_easyicon.net1.ico" />
+    <None Include="Resources\right_arrow_24px_1145589_easyicon.net.ico" />
+    <None Include="Resources\arrow_carrot_left_24px_1143269_easyicon.net.ico" />
+    <None Include="Resources\arrow_carrot_right_24px_1143272_easyicon.net.ico" />
+    <Content Include="License-LGPL.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="AxGeneralVisionControlLib">
+      <Guid>{74427217-4F1B-47AC-9EF5-2550A6A58675}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>aximp</WrapperTool>
+      <Isolated>False</Isolated>
+    </COMReference>
+    <COMReference Include="GeneralVisionControlLib">
+      <Guid>{74427217-4F1B-47AC-9EF5-2550A6A58675}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MotionCtrl\MotionCtrl.csproj">
+      <Project>{85ff29bc-2148-4601-9cca-6fcf115129f4}</Project>
+      <Name>MotionCtrl</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="..\packages\EMGU.CV.3.4.1.2976\build\EMGU.CV.targets" Condition="Exists('..\packages\EMGU.CV.3.4.1.2976\build\EMGU.CV.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>这台计算机上缺少此项目引用的 NuGet 程序包。使用“NuGet 程序包还原”可下载这些程序包。有关更多信息，请参见 http://go.microsoft.com/fwlink/?LinkID=322105。缺少的文件是 {0}。</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\EMGU.CV.3.4.1.2976\build\EMGU.CV.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\EMGU.CV.3.4.1.2976\build\EMGU.CV.targets'))" />
+  </Target>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
