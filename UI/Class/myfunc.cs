@@ -40,11 +40,11 @@ namespace UI
         public static VS MVS = new VS();
         #region 设备复位
         public static bool bhomeing = false;
-        public static EM_RES Home()
+        public static EM_RES Home(ref bool bquit)
         {
             try
             {
-                VAR.gsys_set.bquit = false;
+                bquit = false;
                 bhomeing = true;               
                 EM_RES resLB = EM_RES.OK;
                 EM_RES resRB = EM_RES.OK;
@@ -69,7 +69,7 @@ namespace UI
                 {
                     Application.DoEvents();
                     Thread.Sleep(10);
-                    if (VAR.gsys_set.bquit)
+                    if (bquit)
                         break;
                 }
 
@@ -77,23 +77,23 @@ namespace UI
                 taskFD.Start();
                 taskBBK.Start();
                 taskBFD.Start();
-                while (!VAR.gsys_set.bquit)
+                while (!bquit)
                 {
                     if (taskTM.IsCompleted) break;
                     Application.DoEvents();
                     Thread.Sleep(10);
                 }
-                if (!VAR.gsys_set.bquit &&resTM != EM_RES.OK)
+                if (!bquit && resTM != EM_RES.OK)
                 {
                     // 停止所有
                     return EM_RES.ERR;
                 }
-                if (!VAR.gsys_set.bquit)
+                if (!bquit)
                 {
                     taskGT.Start();
                     taskBK.Start();
                 }
-                while (!VAR.gsys_set.bquit)
+                while (!bquit)
                 {
                     if (taskGT.IsCompleted && taskBK.IsCompleted && taskBFD.IsCompleted && taskBBK.IsCompleted
                         && taskFD.IsCompleted) break;
@@ -105,14 +105,14 @@ namespace UI
                     return EM_RES.OK;
                 else
                    
-                    if (VAR.gsys_set.bquit)
+                    if (bquit)
                         return EM_RES.QUIT;
                 return EM_RES.ERR;
             }
             catch
             {
                 VAR.ErrMsg("全部回原中发生未知错误！");
-                VAR.gsys_set.bquit = true;
+                bquit = true;
                 return EM_RES.ERR;
             }
             finally
@@ -739,7 +739,7 @@ namespace UI
             }
 
         }
-        #endregion
+      
     #region 轴复位
         public static EM_RES AxisHome(ref bool bquit, params AXIS[] axs)
         {
@@ -816,970 +816,9 @@ namespace UI
                 }
             }
         }
-        #endregion
-
-      
-    }
-
-    #region 弹夹上下料
-    public static class WsBuFD
-    {
-        public static TrayBox tbox_get = COM.traybox_get;
-        #region 执行气缸io轴
-        static AXIS ax_Z = COM.traybox_get.ax_z;
-        static Cylinder cyl_lock_up = MT.CYL_bullet_up;//上料盒二挂起气缸
-        static Cylinder cyl_tray_out = MT.CYL_bullet_feed_plate;//上料拉盘气缸
-        static GPIO sen_box_in = MT.CKPOS_bull_feed_box;
-        static GPIO sen_tray_in = MT.CKPOS_bull_feed_plate;
-        static GPIO sen_box_out = MT.CKPOS_bull_belt_come;
-        static GPIO belet_move = MT.GPIO_OUT_belet;
-        static GPIO sen_plate_at_get = MT.CKPOS_MOVE_get_plate;
-        #endregion
-        #region 位置
-        static POS PosBoxOUT = MT.pos_bullet_feed_boxOUT;
-        static POS PosSafe = MT.pos_bullet_feed_safe;
-        static POS PosGetBox = MT.pos_bullet_feed_get_box;
-        static POS PosTrayLow = MT.pos_bullet_feed_check_low;
-        static POS PosTrayTop = MT.pos_bullet_feed_check_top;
-        static POS PosBoxIn = MT.pos_bullet_feed_boxIN;
-        static POS PosTrayStar = MT. pos_get_plate_star;
-        static POS PosTrayRow = MT. pos_get_plate_row;
-        static POS PosTrayLine = MT. pos_get_plate_line;
-        #endregion
-        public static EM_STA status = EM_STA.UNKNOW;
-        public static string disc = "弹夹出料仓工站";
-        public static bool bsafe;//取消防护true
-        public  static string GetStaString
-        {
-            get
-            {
-                return string.Format("{0}+{1}", disc, status.GetDescription());
-            }
-        }
-        /// <summary>
-        /// 运行条件
-        /// </summary>
-        public static bool isReady
-        {
-            get
-            {               
-                if (VAR.gsys_set.bquit) return false;            
-                if (!(WSGet.TaskRun == null || WSGet.TaskRun.IsCompleted))
-                {
-                    status = EM_STA.WAIT;
-                    return false;
-                }
-                if (!(WsTrayMove.TaskRun == null || WsTrayMove.TaskRun.IsCompleted))
-                {
-                    status = EM_STA.WAIT;
-                    return false;
-                }
-                //if (isErr) return false;
-                //if (VAR.gsys_set.status != EM_SYS_STA.RUN) return false;
-                return true;
-            }
-        }
-        public enum EM_STA
-        {
-            [Description("未知")]
-            UNKNOW,
-            [Description("忙")]
-            BUSY,
-            [Description("回零中")]
-            HOME,
-            [Description("就绪")]
-            READY,
-            [Description("盘拉出上料")]
-            TRAYOUT,
-            [Description("准备料盘")]
-            TRAYREADY,
-            [Description("上料盒")]
-            BOXIN,
-            [Description("出料盒")]
-            BOXOUT,
-            [Description("换料盒二")]
-            BOXCHG,
-            [Description("错误")]
-            ERR,
-            [Description("安全位")]
-            SAFE,
-            [Description("等待")]
-            STANDBY,
-            [Description("等待上料")]
-            WAIT
-
-
-        }
-    
-
-        #region 动作函数
-        public static EM_RES trayReady(ref bool bquit)
-        {
-            if (!isReady) return EM_RES.QUIT;
-            if (tbox_get == null) return EM_RES.QUIT;
-            EM_RES ret = tbox_get.TrayReadyOUT(ref  bquit);
-            return ret;
-        }
-        public static EM_RES trayOut(ref bool bquit)
-        {
-            ////gy-临时修改
-            COM.product.TrayGet.NewTray(true, Product.EM_CM_RES.OK);
-            WSGet.tray_now = COM.product.TrayGet;
-            return EM_RES.OK;
-
-            if (!isReady) return EM_RES.QUIT;
-            if (tbox_get == null) return EM_RES.QUIT;
-            if (sen_plate_at_get.AssertON())
-            { 
-                
-                return EM_RES.ERR;
-            }
-            EM_RES ret = EM_RES.OK;
-            ret = tbox_get.TrayOut(ref  bquit);
-            if (ret == EM_RES.OK)
-            {
-                if (sen_plate_at_get.AssertON())
-                {
-                    COM.product.TrayGet.NewTray(false, Product.EM_CM_RES.UNTEST);
-                    WSGet.tray_now = COM.product.TrayGet;
-                    return EM_RES.OK;
-                }
-                else
-                    return EM_RES.ERR;
-            }
-
-            return ret;
-        }
-        public static EM_RES boxIN(ref bool bquit)
-        {
-            try
-            {
-                EM_RES ret = EM_RES.OK;
-                status = EM_STA.BOXIN;
-                if (sen_box_in.AssertON())
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}" + "有料盘在", GetStaString));
-                    return EM_RES.ERR;
-                }
-
-                ret = cyl_lock_up.SetOff(ref bquit, 3000);
-                if (ret != EM_RES.OK) return ret;
-
-
-                //接料盒位高位一个也有传感反应
-                ret = MT.pos_bullet_feed_get_box.MoveTo(ref bquit, true);
-                if (ret != EM_RES.OK) return ret;
-                while (isReady)
-                {
-                    Action.MsgShow("请上料盒");
-                    if (sen_box_in.AssertON())
-                        break;
-                }
-
-                //check box在
-                if (sen_box_in.AssertOFF())
-                {
-                    return EM_RES.ERR;
-                }
-                //到到检测备料盒位置，检测有两个，再挂起，否则一直不挂
-                ret = MT.pos_bullet_feed_boxIN.MoveTo(ref bquit, true); //安全
-                if (ret != EM_RES.OK) return ret;
-                if (sen_box_in.AssertON())
-                {
-                    ret = cyl_lock_up.SetOn(ref bquit, 3000);
-                    if (ret != EM_RES.OK) return ret;
-                }
-
-                COM.traybox_get.NewBox(Product.EM_CM_RES.OK);
-                COM.traybox_get.SetSta(TrayBox.EM_STA.FULL);
-                return ret;
-            }
-            catch
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--" + "异常", GetStaString));
-                return EM_RES.ERR;
-            }
-
-        }
-        public static EM_RES boxOUT(ref bool bquit)
-        {
-
-            EM_RES ret = EM_RES.OK;
-            //下降到出料位
-            status = EM_STA.BOXOUT;
-            ret = PosBoxOUT.MoveTo(ref bquit, true); //安全
-            if (ret != EM_RES.OK) return ret;
-            //检测到达出料位
-            //皮带运动
-            ret = belet_move.SetOn();
-            if (ret != EM_RES.OK) return ret;
-            ret = sen_box_out.WaitON(ref bquit);
-            if (ret != EM_RES.OK) { belet_move.SetOff(); return ret; }
-            ret = sen_box_out.WaitOFF(ref bquit);
-            if (ret != EM_RES.OK) { belet_move.SetOff(); return ret; }
-            //皮带停止
-            ret = belet_move.SetOff();
-            if (ret != EM_RES.OK) return ret;
-            //如果成功启动下一动作
-            COM.traybox_get.SetSta(TrayBox.EM_STA.EMPTY);//所有料盘满料
-            COM.traybox_get.NewBox(Product.EM_CM_RES.NONE);//所有模组ok
-            return ret;
-        }
-        public static EM_RES boxChange(ref bool bquit)
-        {
-            EM_RES ret = EM_RES.OK;
-            if (sen_box_in.AssertOFF())
-            {
-                return EM_RES.ERR;
-            }
-            //到获取料盒位置
-
-            ret = PosGetBox.MoveTo(ref bquit, true); //安全
-            if (ret != EM_RES.OK) return ret;
-            //关锁
-            ret = cyl_lock_up.SetOff(ref bquit, 3000);
-            if (ret != EM_RES.OK) return ret;
-            //下降到料盘位
-            ret = PosTrayTop.MoveTo(ref bquit, true);
-            if (ret != EM_RES.OK) return ret;
-            COM.traybox_get.NewBox(Product.EM_CM_RES.OK);
-            COM.traybox_get.SetSta(UI.TrayBox.EM_STA.FULL);
-            return ret;
-        }
-        static Mact TRAYREADY = new Mact(trayReady);
-        static Mact TRAYOUT = new Mact(trayOut);
-        static Mact BOXIN = new Mact(boxIN);
-        static Mact BOXOUT = new Mact(boxOUT);
-        static Mact BOXCHANGE = new Mact(boxChange);
-        #endregion
-        /// <summary>
-        /// 委托轴安全防护
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="pos"></param>
-        /// <returns></returns>
-
-        public static EM_RES axZ_Safe(int id, double pos = 0)
-        {
-            EM_RES ret = EM_RES.OK;
-            if (bsafe) return ret;
-            if (sen_box_in.AssertOFF())
-            {
-                ret = cyl_lock_up.SetOff(ref VAR.gsys_set.bquit, 3000);
-                if (ret != EM_RES.OK) return ret;
-            }
-            ret = cyl_tray_out.SetOn(ref VAR.gsys_set.bquit, 3000);
-            if (ret != EM_RES.OK) return ret;
-            return ret;
-        }
-        #region 运行
-        public static void act_run()
-        {
-
-            if (!isReady) return ;
-            EM_RES ret = EM_RES.OK;
-            if (sen_plate_at_get.AssertON()) return;
-            ret=Action.DoAct(TRAYREADY,  GetStaString);
-            if (ret != EM_RES.OK && isReady)
-            {
-                if (tbox_get.status == TrayBox.EM_STA.EMPTY)
-                {
-            
-                    ret = Action.DoAct(BOXOUT, GetStaString);
-                    ret = MT.pos_bullet_feed_boxIN.MoveTo(ref VAR.gsys_set.bquit, true); //安全
-                    if (sen_box_in.AssertON())
-                    {
-  
-                        ret = Action.DoAct(BOXCHANGE, GetStaString);
-                    }
-                    else
-                    {
-                        ret = Action.DoAct(BOXIN, GetStaString);
-                    }
-                    ret = Action.DoAct(TRAYREADY, GetStaString);
-
-                }
-                else
-                    if (tbox_get.status == TrayBox.EM_STA.NOBOX) //
-                    {
-                    //进料盒命令
-                    ret = Action.DoAct(BOXIN, GetStaString);
-                    ret = Action.DoAct(TRAYREADY, GetStaString);
-                    }
-    
-
-            }
-            ret = Action.DoAct(TRAYOUT, GetStaString);
-
-
-
-        }
-        public static Task TaskRun;
-        public static void task_run()
-        {
-            if (TaskRun == null || (TaskRun != null && TaskRun.IsCompleted))
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, "创建出料仓线程");
-                if (TaskRun != null)
-                    TaskRun.Dispose();
-                TaskRun = new Task(act_run);
-                TaskRun.Start();
-
-            }
-        }
-        #endregion
-        #region 回原
-        public static EM_RES home(ref bool bquit)
-        {
-            EM_RES res = EM_RES.OK;
-            status = EM_STA.HOME;
-            if (!(TaskRun == null || TaskRun.IsCompleted))
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 工站工作中，回原失败!", disc));
-                return EM_RES.ERR;
-            }
-            if (sen_box_in.AssertON())
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 检测到有料盒，回原失败!", disc));
-                return EM_RES.ERR;
-            }
-            res = cyl_lock_up.SetOff(1000);
-            if (res != EM_RES.OK)
-                return res;
-            res = MT.AxisHome(ref bquit, ax_Z);
-            status = EM_STA.STANDBY;
-            return res;
-        }
-        #endregion
-        #region 停止
-        public static void Stop()
-        {
-            ax_Z.bhomequit = true;
-            ax_Z.Stop();
-        }
-        #endregion
-
-    }
-    public static class WsBuBK
-    {
-        #region 硬件和位置
-        public static TrayBox tbox_get = COM.traybox_back;
-        static Product.Tray tray_out = COM.traybox_back.tray_cur;
-        static AXIS ax_Z = COM.traybox_back.ax_z;
-  
-        static Cylinder cyl_tray_in = MT.CYL_bullet_back_plate;//拉盘气缸
-        static GPIO sen_box_in = MT.CKPOS_bull_belt_topos;//皮带进料处感应料盒来
-        static GPIO sen_tray_in = MT.CKPOS_bull_back_plate;
-        static GPIO sen_box_out = MT.CKPOS_bull_back_box;//料盒外出感应
-        static GPIO belet_move = MT.GPIO_OUT_belet;
-        static POS PosBoxOUT = MT.pos_bullet_back_boxOUT;
-        static POS PosSafe = MT.pos_bullet_back_safe;
-        static POS PosTrayLow = MT.pos_bullet_back_check_low;
-        static POS PosTrayTop = MT.pos_bullet_back_check_top;
-        static POS PosBoxIn = MT.pos_bullet_back_boxIN;
-        #endregion
-        public static string warn_msg = "";
-        public static bool isShow = true;//弹窗
-        public static bool isErr;
-        public static EM_STA status = EM_STA.UNKNOW;
-        public static string disc = "料盘移栽工站";
-        public static string GetStaString
-        {
-            get
-            {
-                return status.GetDescription();
-            }
-        }
-        /// <summary>
-        /// 运行条件
-        /// </summary>
-        public static bool isReady
-        {
-            get
-            {
-                if (VAR.gsys_set.bquit) return false;
-          
-                if (!(WSBack.TaskRun == null || WSBack.TaskRun.IsCompleted))
-                    return false;
-                if (!(WsTrayMove.TaskRun == null || WsTrayMove.TaskRun.IsCompleted))
-                    return false;
-                return true;
-            }
-        }
-        public static bool mbOK;
-        public enum EM_STA
-        {
-            [Description("未知")]
-            UNKNOW,
-            [Description("忙")]
-            BUSY,
-            [Description("回零中")]
-            HOME,
-            [Description("就绪")]
-            READY,
-            [Description("盘拉进")]
-            TRAYIN,
-            [Description("准备收料位")]
-            TRAYREADY,
-            [Description("进料盒")]
-            BOXIN,
-            [Description("出料盒")]
-            BOXOUT,
-            [Description("错误")]
-            ERR,
-            [Description("等待")]
-            STANDBY,
-            [Description("等待取料盒")]
-            WAIT
-        }
-        #region 动作函数
-        public static EM_RES trayReady(ref bool bquit)
-        {
-            if (isReady) return EM_RES.QUIT;
-            if (WSBack.tbox_back == null) return EM_RES.QUIT;
-            EM_RES ret = WSBack.tbox_back.TrayReadyIN(ref  bquit);
-            return ret;
-        }
-        public static EM_RES trayIN(ref bool bquit)
-        {
-            status = EM_STA.TRAYIN;
-            if (WSBack.tbox_back == null) return EM_RES.QUIT;
-            EM_RES ret = WSBack.tbox_back.TrayIn(ref  bquit);
-            return ret;
-        }
-        public static EM_RES boxIN(ref bool bquit)
-        {
-            EM_RES res = EM_RES.OK;
-            try
-            {
-                status = EM_STA.BOXIN;
-                int i = 0;
-                //到进料位
-                res = PosBoxIn.MoveTo(ref bquit, true);
-                if (res != EM_RES.OK) return res;
-                //check box在
-                res = belet_move.SetOn();
-                if (res != EM_RES.OK) return res;
-                while (sen_box_in.AssertOFF() && isReady)
-                {
-                    Thread.Sleep(20);
-                    Application.DoEvents();
-                    i++;
-                    if (i > 1000)
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}等待超时", GetStaString));
-                        res = belet_move.SetOff();
-                        return EM_RES.ERR;
-                    }
-                }
-                for (int j = 0; j < 100; j++)
-                {
-                    Thread.Sleep(30);
-                    Application.DoEvents();
-                    if (!isReady) break;
-                }
-                res = belet_move.SetOff();
-                if (res != EM_RES.OK) return res;
-                return res;
-            }
-            catch(Exception ee)
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}-{1}", disc,ee.ToString() ));
-                return EM_RES.ERR;
-            }
-
-        }
-        public static EM_RES boxOUT(ref bool bquit)
-        {
-            EM_RES res = EM_RES.OK;
-            try
-            {
-                status = EM_STA.BOXOUT;
-                //到出料位
-                res = PosBoxOUT.MoveTo(ref bquit, true);
-                if (res != EM_RES.OK) return res;
-                if (!sen_box_out.AssertON())
-                {
-                    VAR.ErrMsg(string.Format("{0}+{1}无料盒", disc, status.GetDescription()));
-                    return EM_RES.ERR;
-                }
-                //检测到达出料位等待拿走
-                int i = 0;
-                while (sen_box_out.AssertON() && isReady)
-                {
-                    Thread.Sleep(30);
-                    Application.DoEvents();
-                    i++;
-                    if (i > 1000)
-                    {
-                        VAR.ErrMsg(string.Format("{0}+{1}等待拿料盒超时", disc, status.GetDescription()));
-                        return EM_RES.ERR;
-                    }
-                }
-                return res;
-            }
-            catch
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}-{1}未知错误", disc, GetStaString));
-                return EM_RES.ERR;
-            }
-
-        }
-        #endregion
-        public static void act_run()
-        {
-            try
-            {
-                if (!isReady) goto MSTOP;
-                EM_RES ret = EM_RES.OK;
-               
-
-                ret = trayReady (ref VAR.gsys_set.bquit);
-                if (ret != EM_RES.OK && isReady)
-                {
-                    if (WSBack.tbox_back.status == TrayBox.EM_STA.FULL)
-                    {
-                        ret = boxOUT(ref VAR.gsys_set.bquit);
-                        if (ret != EM_RES.OK) goto MSTOP;
-                        ret = boxIN(ref VAR.gsys_set.bquit);
-                        if (ret != EM_RES.OK) goto MSTOP;
-                        ret = trayReady(ref VAR.gsys_set.bquit);
-                        if (ret != EM_RES.OK) goto MSTOP;
-                    }
-                }
-                ret = trayIN(ref VAR.gsys_set.bquit);
-                if (ret != EM_RES.OK) goto MSTOP;
-            MSTOP:
-                if (!VAR.gsys_set.bquit)
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "运行失败", disc, GetStaString));
-                    VAR.gsys_set.bquit = true;
-                }
-                status = EM_STA.ERR;
-                Action.stop();
-                Stop();
-
-            }
-
-            catch
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}-{1}未知错误", disc, GetStaString));
-
-            }
-
-        }
-        public static Task TaskRun;
-        public static void task_run()
-        {
-            if (TaskRun == null || (TaskRun != null && TaskRun.IsCompleted))
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, "创建料仓线程");
-                if (TaskRun != null)
-                    TaskRun.Dispose();
-                TaskRun = new Task(act_run);
-                TaskRun.Start();
-            }
-        }
-        public static EM_RES home(ref bool bquit)
-        {
-            EM_RES res = EM_RES.OK;
-            if (!(TaskRun == null || TaskRun.IsCompleted))
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 工站工作中，回原失败!", disc));
-                return EM_RES.ERR;
-            }
-            if (sen_box_out.AssertON())
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 检测到有料盒，回原失败!", disc));
-                return EM_RES.ERR;
-            }
-            res = MT.AxisHome(ref bquit, ax_Z);
-            return res;
-        }
-        public static void Stop()
-        {
-            ax_Z.bhomequit = true;
-            ax_Z.Stop();
-        }
-        public static EM_RES axZ_Safe(int id, double pos = 0)
-        {
-            EM_RES ret = EM_RES.OK;
-            ret = cyl_tray_in.SetOff(ref VAR.gsys_set.bquit, 3000);
-            return ret;
-        }
-    }
-    public static class WsTrayMove
-    {
-       
-        public static GPIO sen_tray_get = MT.CKPOS_MOVE_get_plate;
-        public static GPIO sen_tray_store = MT.CKPOS_MOVE_middle_plate;
-        public static GPIO sen_tray_back = MT.CKPOS_MOVE_back_plate;
-        public static Cylinder vacu_move = MT.VACUM_move_plate;
-        public static AXIS ax_Z = MT.AXIS_bullet_move;
-
-        public static EM_STA status = EM_STA.UNKNOW;
-        public static bool bhome = false;
-        public static string disc = "料盘移栽工站";
-        public static string GetStaString
-        {
-            get
-            {
-                return status.GetDescription();
-            }
-        }
-        public static bool isReady
-        {
-            get
-            {
-                if (VAR.gsys_set.bquit) return false;
-       
-                if (!(WSBack.TaskRun == null || WSBack.TaskRun.IsCompleted))
-                {
-                    status = EM_STA.BUSY;
-                    return false;
-                }
-                if (!(WSGet.TaskRun == null || WSGet.TaskRun.IsCompleted))
-                {
-                    status = EM_STA.BUSY;
-                    return false;
-                }
-                // if (VAR.gsys_set.status != EM_SYS_STA.RUN) return false;
-                return true;
-            }
-        }
-        public enum EM_STA
-        {
-            [Description("未知")]
-            UNKNOW,
-            [Description("忙")]
-            BUSY,
-            [Description("回零中")]
-            HOME,
-            [Description("就绪")]
-            READY,
-            [Description("空盘上料")]
-            PLACE,
-            [Description("空盘存料")]
-            PICK,
-            [Description("错误")]
-            ERR,
-            [Description("安全位")]
-            SAFE,
-            [Description("等待")]
-            STANDBY
-        }
-
-   
-
-        //下降放料
-        static EM_RES m_down_put(ref bool bquit)
-        {
-            try
-            {
-                EM_RES ret = EM_RES.OK;
-                //检测真空
-                if (!vacu_move.io_sen_on.AssertON())
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "吸嘴无料", disc, GetStaString));
-                    return EM_RES.ERR;
-
-                }
-
-                //气缸下降
-                ret = MT.CYL_bullet_move_plate_up.SetOn(ref bquit, 3000);
-                if (ret != EM_RES.OK) return ret;
-                ret = MT.VACUM_move_plate.SetOff(ref bquit);
-                if (ret != EM_RES.OK) return ret;
-                Thread.Sleep(500);
-                Application.DoEvents();
-                Thread.Sleep(500);
-                Application.DoEvents();
-                Thread.Sleep(500);
-                Application.DoEvents();
-                Thread.Sleep(500);
-                Application.DoEvents();
-                Thread.Sleep(500);
-                Application.DoEvents();
-                //气缸上升
-                ret = MT.CYL_bullet_move_plate_up.SetOff(ref bquit, 3000);
-                if (ret != EM_RES.OK) return ret;
-                //检测真空
-                if (!vacu_move.io_sen_on.AssertOFF())
-                    return EM_RES.ERR;
-                else
-                    return EM_RES.OK;
-            }
-            catch
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "未知错误", disc, GetStaString));
-                return EM_RES.ERR;
-            }
-        }
-        public static EM_RES ck_ax_safe(int id, double pos = 0)
-        {
-            EM_RES ret = EM_RES.OK;
-            if (MT.CYL_bullet_move_plate_up == null) return EM_RES.ERR;
-            if (MT.CYL_bullet_move_plate_up.io_sen_off.AssertON()) return EM_RES.OK;
-            else
-                ret = MT.CYL_bullet_move_plate_up.SetOff(ref VAR.gsys_set.bquit, 3000);
-            return ret;
-
-        }
-        //移栽下降取料
-        static EM_RES m_down_get(ref bool bquit)
-        {
-            EM_RES ret = EM_RES.OK;
-            try
-            {
-                ret = MT.VACUM_move_plate.SetOn(ref bquit);
-                if (ret != EM_RES.OK) return ret;
-                //气缸下降
-                ret = MT.CYL_bullet_move_plate_up.SetOn(ref bquit, 3000);
-                //打开真空
-                if (ret != EM_RES.OK) return ret;
-                ret = MT.VACUM_move_plate.SetOn(ref bquit, 6000);
-                if (ret != EM_RES.OK) return ret;
-                //气缸升
-                ret = MT.CYL_bullet_move_plate_up.SetOff(ref bquit, 3000);
-                if (ret != EM_RES.OK) return ret;
-                //检测真空
-                if (MT.VACUM_move_plate.io_sen_on.AssertOFF())
-                    return EM_RES.ERR;
-                else
-                    return EM_RES.OK;
-            }
-
-            catch
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "未知错误", disc, GetStaString));
-                return EM_RES.ERR;
-            }
-            finally
-            {
-                ret = MT.CYL_bullet_move_plate_up.SetOff(ref bquit, 3000);
-            }
-
-        }
-        //移栽取料
-        public static EM_RES m_GET(ref bool bquit)
-        {
-            EM_RES ret = EM_RES.OK;
-            try
-            {
-                status = EM_STA.PICK;
-                //检测料盘在位
-                if (MT.CKPOS_MOVE_get_plate.isOFF) return EM_RES.OK;
-                ret = MT.CYL_bullet_move_plate_up.SetOff(ref bquit, 3000);
-                if (ret != EM_RES.OK) return ret;
-                //轴运动                    
-
-                ret = MT.pos_bullet_move_get_tray.MoveTo(ref bquit, true);
-                if (ret != EM_RES.OK) return ret;
-                ret = m_down_get(ref bquit);
-                if (ret != EM_RES.OK) return ret;
-                //检测料盘不在位
-
-                if (!MT.CKPOS_MOVE_get_plate.AssertON())
-                    return EM_RES.ERR;
-                ret = MT.pos_bullet_move_center.MoveTo(ref bquit, true);
-                if (ret != EM_RES.OK) return ret;
-                ret = m_down_put(ref bquit);
-                if (ret != EM_RES.OK) return ret;
-                //检测料盘在位
-                if (MT.CKPOS_MOVE_get_plate.AssertON())
-                    return EM_RES.ERR;
-                else
-
-                    return EM_RES.OK;
-            }
-
-            catch
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "未知错误", disc, GetStaString));
-                return EM_RES.ERR;
-            }
-
-
-
-        }
-        public static EM_RES m_PUT(ref bool bquit)
-        {
-            EM_RES ret = EM_RES.OK;
-            try
-            {
-                //检测有无料盘            
-                ret = MT.pos_bullet_move_center.MoveTo(ref bquit);
-                if (ret != EM_RES.OK) return ret;
-                //检测料盘在位                    
-                if (!MT.CKPOS_MOVE_middle_plate.AssertON())
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "中间位无料盘请上料盘从新开始", disc, GetStaString));
-                    return EM_RES.ERR;
-                }
-                ret = m_down_get(ref bquit);
-                if (ret != EM_RES.OK) return ret;
-                ret = MT.pos_bullet_move_put.MoveTo(ref bquit, true);
-                if (ret != EM_RES.OK) return ret;
-                ret = m_down_put(ref bquit);
-                if (ret != EM_RES.OK) return ret;
-                //检测料盘在位
-                if (!MT.CKPOS_MOVE_back_plate.AssertON())
-                    return EM_RES.ERR;
-                return ret;
-            }
-            catch
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "未知错误", disc, GetStaString));
-                return EM_RES.ERR;
-
-            }
-
-        }
-        //移栽安全位
-        public static EM_RES m_SAFE(ref bool bquit)
-        {
-            EM_RES ret = EM_RES.OK;
-
-            try
-            {
-
-                //轴运动       
-                ret = MT.pos_bullet_move_safe.MoveTo(ref bquit, true);
-                if (ret != EM_RES.OK) return ret;
-                if (!ax_Z.isORG)
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "移栽轴不在原点", disc, GetStaString));
-                    return EM_RES.ERR;
-                }
-                else
-                    return EM_RES.OK;
-            }
-            catch
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "未知错误", disc, GetStaString));
-                return EM_RES.ERR;
-            }
-        }
-        public static void act_run()
-        {
-
-            try
-            {
-                EM_RES ret = EM_RES.OK;
-                if (!isReady)
-                    return;
-
-                if (sen_tray_get.AssertON())
-                {
-                    ret = m_GET(ref VAR.gsys_set.bquit);
-                    if (ret != EM_RES.OK)
-                        goto MSTOP;
-                    WSGet.tray_now = null;
-                }
-                if (!sen_tray_back.AssertON())
-                {
-                    if (sen_tray_store.AssertON())
-                    {
-                        ret = m_PUT(ref VAR.gsys_set.bquit);
-                        if (ret != EM_RES.OK)
-                            goto MSTOP;
-                        WSBack.tray_now = null;
-                       
-                    }
-                    else
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "中间无空盘", disc, GetStaString));
-                        status = EM_STA.ERR;
-                        goto MSTOP;
-                    }
-                }
-                if (!ax_Z.isORG)
-                {
-                    ret = m_SAFE(ref VAR.gsys_set.bquit);
-                    if (ret != EM_RES.OK) goto MSTOP;
-                }
-            MSTOP:
-                if (!VAR.gsys_set.bquit)
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "运行失败", disc, GetStaString));
-                    VAR.gsys_set.bquit = true;
-                }
-                status = EM_STA.ERR;
-                Action.stop();
-                Stop();
-            }
-            catch (Exception ee)
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "未知错误", disc, ee.ToString()));
-            }
-
-
-        }
-        public static Task TaskRun;
-        public static void task_run()
-        {
-            if (TaskRun == null || (TaskRun != null && TaskRun.IsCompleted))
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, "创建料仓线程");
-                if (TaskRun != null)
-                    TaskRun.Dispose();
-                TaskRun = new Task(act_run);
-                TaskRun.Start();
-
-            }
-        }
-        public static EM_RES home(ref bool bquit)
-        {
-            EM_RES ret = EM_RES.OK;
-            if (bquit) return EM_RES.QUIT;
-            status = EM_STA.HOME;
-            if (!((WSGet.TaskRun == null || WSGet.TaskRun.IsCompleted) &&
-               (WSBack.TaskRun == null || WSBack.TaskRun.IsCompleted)))
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 取料和收料工站未退出!", disc));
-                return EM_RES.ERR;
-            }
-            if (!WSGet.ax_x.isORG)
-            {
-                ret = WSGet.ax_z.MoveTo(ref bquit, 99999, 5000);
-                if (ret != EM_RES.OK) return ret;
-                ret = WSGet.ax_x.MoveTo(ref bquit, 99999, 5000);
-                if (ret != EM_RES.OK) return ret;
-                if (!WSGet.ax_x.isELP)
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} q取料工站到正限位异常!", disc));
-                    return EM_RES.ERR;
-                }
-
-            }
-            if (!WSBack.ax_x.isORG)
-            {
-                ret = WSBack.ax_z.MoveTo(ref bquit, 99999, 5000);
-                if (ret != EM_RES.OK) return ret;
-                ret = WSBack.ax_x.MoveTo(ref bquit, 99999, 5000);
-                if (ret != EM_RES.OK) return ret;
-                if (!WSBack.ax_x.isELP)
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 取料工站到正限位异常!", disc));
-                    return EM_RES.ERR;
-                }
-
-            }
-            ret = MT.AxisHome(ref bquit, ax_Z);
-            if (ret != EM_RES.OK) return ret;
-            else
-                status = EM_STA.STANDBY;
-            return ret;
-        }
-        public static void Stop()
-        {
-            ax_Z.bhomequit = true;
-            ax_Z.Stop();
-        }
-
+        #endregion    
     }
     #endregion
-
     #region 料仓
     public class TrayBox
     {
@@ -1791,10 +830,10 @@ namespace UI
         public POS pos_high;
         public POS pos_out;
         public POS pos_in;
-       
+
         public int tray_cnt
         {
-            get { return VAR.gsys_set.box_tray_cnt; }         
+            get { return VAR.gsys_set.box_tray_cnt; }
         }
         //当前格
         int m_tray_idx;
@@ -1872,8 +911,6 @@ namespace UI
             get
             {
                 if (VAR.gsys_set.bquit) return false;
-                        
-            
                 return true;
             }
         }
@@ -1905,7 +942,7 @@ namespace UI
         //料盘真空吸感应
         public GPIO in_tray_zk;
         public string warn_msg;
-    
+
         public int boxID;
         //料仓的盘状态
         public EM_STA status;
@@ -1930,7 +967,7 @@ namespace UI
             [Description("错误")]
             ERR
         }
-       
+
         public string GetStaStr
         {
             get
@@ -1986,7 +1023,7 @@ namespace UI
             this.tray_out_in_cyl = tray_out_in_cyl;
             this.tray_mov_up_cyl = tray_mov_up_cyl;
         }
-        public TrayBox(string disc, ref POS pos_low, ref POS pos_high, int boxID = 1, EM_DIR dir = EM_DIR.ONLY_IN, Cylinder tray_out_in_cyl = null, int cnt = 10, AXIS ax_x = null, AXIS ax_z = null, 
+        public TrayBox(string disc, ref POS pos_low, ref POS pos_high, int boxID = 1, EM_DIR dir = EM_DIR.ONLY_IN, Cylinder tray_out_in_cyl = null, int cnt = 10, AXIS ax_x = null, AXIS ax_z = null,
              POS pos_out = null, POS pos_in = null, GPIO in_box_sen = null, GPIO in_tray_sen = null, Cylinder tray_mov_up_cyl = null)
         {
             TrayBox_init(disc, dir, cnt, ax_x, ax_z, in_box_sen, in_tray_sen);
@@ -1994,9 +1031,9 @@ namespace UI
             this.tray_out_in_cyl = tray_out_in_cyl;
             this.tray_mov_up_cyl = tray_mov_up_cyl;
             if (pos_high != null) pos_high.UpdatePos();
-            if (pos_low != null) pos_low.UpdatePos();      
+            if (pos_low != null) pos_low.UpdatePos();
             if (pos_out != null) pos_out.UpdatePos();
-            if (pos_in != null) pos_in.UpdatePos();       
+            if (pos_in != null) pos_in.UpdatePos();
             this.pos_low = pos_low;//-gy-1204-
             this.pos_high = pos_high;
             this.pos_out = pos_out;
@@ -2330,9 +1367,9 @@ namespace UI
                 //cyl_work
                 if (tray_out_in_cyl != null)
                 {
-                    ret = tray_out_in_cyl.SetOn(30);                   
+                    ret = tray_out_in_cyl.SetOn(30);
                     if (ret != EM_RES.OK) return ret;
-                    ret = tray_out_in_cyl.SetOff(30);                 
+                    ret = tray_out_in_cyl.SetOff(30);
                     if (ret != EM_RES.OK) return ret;
 
                 }
@@ -2380,6 +1417,1046 @@ namespace UI
 
     }
     #endregion
+    #region 工站
+   
+    #region 弹夹上下料
+    public  class WsBuFD
+    {
+        public static TrayBox tbox_get = COM.traybox_get;
+        #region 执行气缸io轴
+        static AXIS ax_Z = COM.traybox_get.ax_z;
+        static Cylinder cyl_lock_up = MT.CYL_bullet_up;//上料盒二挂起气缸
+        static Cylinder cyl_tray_out = MT.CYL_bullet_feed_plate;//上料拉盘气缸
+        static GPIO sen_box_in = MT.CKPOS_bull_feed_box;
+        static GPIO sen_tray_in = MT.CKPOS_bull_feed_plate;
+        static GPIO sen_box_out = MT.CKPOS_bull_belt_come;
+        static GPIO belet_move = MT.GPIO_OUT_belet;
+        static GPIO sen_plate_at_get = MT.CKPOS_MOVE_get_plate;
+        #endregion
+        #region 位置
+        static POS PosBoxOUT = MT.pos_bullet_feed_boxOUT;
+        static POS PosSafe = MT.pos_bullet_feed_safe;
+        static POS PosGetBox = MT.pos_bullet_feed_get_box;
+        static POS PosTrayLow = MT.pos_bullet_feed_check_low;
+        static POS PosTrayTop = MT.pos_bullet_feed_check_top;
+        static POS PosBoxIn = MT.pos_bullet_feed_boxIN;
+        static POS PosTrayStar = MT. pos_get_plate_star;
+        static POS PosTrayRow = MT. pos_get_plate_row;
+        static POS PosTrayLine = MT. pos_get_plate_line;
+        #endregion
+        public static EM_STA status = EM_STA.UNKNOW;
+        public static string disc = "弹夹出料仓工站";
+        public static bool bsafe;//取消防护true
+        public  static string GetStaString
+        {
+            get
+            {
+                return string.Format("{0}+{1}", disc, status.GetDescription());
+            }
+        }
+        /// <summary>
+        /// 运行条件
+        /// </summary>
+        public static bool isReady
+        {
+            get
+            {               
+                if (VAR.gsys_set.bquit) return false;            
+                if (!(WSGet.TaskRun == null || WSGet.TaskRun.IsCompleted))
+                {
+                    status = EM_STA.WAIT;
+                    return false;
+                }
+                if (!(WsTrayMove.TaskRun == null || WsTrayMove.TaskRun.IsCompleted))
+                {
+                    status = EM_STA.WAIT;
+                    return false;
+                }
+                //if (isErr) return false;
+                //if (VAR.gsys_set.status != EM_SYS_STA.RUN) return false;
+                return true;
+            }
+        }
+        public enum EM_STA
+        {
+            [Description("未知")]
+            UNKNOW,
+            [Description("忙")]
+            BUSY,
+            [Description("回零中")]
+            HOME,
+            [Description("就绪")]
+            READY,
+            [Description("盘拉出上料")]
+            TRAYOUT,
+            [Description("准备料盘")]
+            TRAYREADY,
+            [Description("上料盒")]
+            BOXIN,
+            [Description("出料盒")]
+            BOXOUT,
+            [Description("换料盒二")]
+            BOXCHG,
+            [Description("错误")]
+            ERR,
+            [Description("安全位")]
+            SAFE,
+            [Description("等待")]
+            STANDBY,
+            [Description("等待上料")]
+            WAIT
+
+
+        }
+    
+
+        #region 动作函数
+        public static EM_RES trayReady(ref bool bquit)
+        {
+            if (!isReady) return EM_RES.QUIT;
+            if (tbox_get == null) return EM_RES.QUIT;
+            EM_RES ret = tbox_get.TrayReadyOUT(ref  bquit);
+            return ret;
+        }
+        public static EM_RES trayOut(ref bool bquit)
+        {
+
+            if (!isReady) return EM_RES.QUIT;
+            if (tbox_get == null) return EM_RES.QUIT;
+            if (sen_plate_at_get.AssertON())
+            {                 
+                return EM_RES.ERR;
+            }
+            EM_RES ret = EM_RES.OK;
+            ret = tbox_get.TrayOut(ref  bquit);
+            if (ret == EM_RES.OK)
+            {
+                if (sen_plate_at_get.AssertON())
+                {
+                    COM.product.TrayGet.NewTray(false, Product.EM_CM_RES.UNTEST);
+                    WSGet.tray_now = COM.product.TrayGet;
+                    return EM_RES.OK;
+                }
+                else
+                    return EM_RES.ERR;
+            }
+
+            return ret;
+        }
+        public static EM_RES boxIN(ref bool bquit)
+        {
+            try
+            {
+                EM_RES ret = EM_RES.OK;
+                status = EM_STA.BOXIN;
+                if (sen_box_in.AssertON())
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}" + "有料盘在", GetStaString));
+                    return EM_RES.ERR;
+                }
+
+                ret = cyl_lock_up.SetOff(ref bquit, 3000);
+                if (ret != EM_RES.OK) return ret;
+
+
+                //接料盒位高位一个也有传感反应
+                ret = MT.pos_bullet_feed_get_box.MoveTo(ref bquit, true);
+                if (ret != EM_RES.OK) return ret;
+                while (isReady)
+                {
+                    Action.MsgShow("请上料盒");
+                    if (sen_box_in.AssertON())
+                        break;
+                }
+
+                //check box在
+                if (sen_box_in.AssertOFF())
+                {
+                    return EM_RES.ERR;
+                }
+                //到到检测备料盒位置，检测有两个，再挂起，否则一直不挂
+                ret = MT.pos_bullet_feed_boxIN.MoveTo(ref bquit, true); //安全
+                if (ret != EM_RES.OK) return ret;
+                if (sen_box_in.AssertON())
+                {
+                    ret = cyl_lock_up.SetOn(ref bquit, 3000);
+                    if (ret != EM_RES.OK) return ret;
+                }
+
+                COM.traybox_get.NewBox(Product.EM_CM_RES.OK);
+                COM.traybox_get.SetSta(TrayBox.EM_STA.FULL);
+                return ret;
+            }
+            catch
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--" + "异常", GetStaString));
+                return EM_RES.ERR;
+            }
+
+        }
+        public static EM_RES boxOUT(ref bool bquit)
+        {
+
+            EM_RES ret = EM_RES.OK;
+            //下降到出料位
+            status = EM_STA.BOXOUT;
+            ret = PosBoxOUT.MoveTo(ref bquit, true); //安全
+            if (ret != EM_RES.OK) return ret;
+            //检测到达出料位
+            //皮带运动
+            ret = belet_move.SetOn();
+            if (ret != EM_RES.OK) return ret;
+            ret = sen_box_out.WaitON(ref bquit);
+            if (ret != EM_RES.OK) { belet_move.SetOff(); return ret; }
+            ret = sen_box_out.WaitOFF(ref bquit);
+            if (ret != EM_RES.OK) { belet_move.SetOff(); return ret; }
+            //皮带停止
+            ret = belet_move.SetOff();
+            if (ret != EM_RES.OK) return ret;
+            //如果成功启动下一动作
+            COM.traybox_get.SetSta(TrayBox.EM_STA.EMPTY);//所有料盘满料
+            COM.traybox_get.NewBox(Product.EM_CM_RES.NONE);//所有模组ok
+            return ret;
+        }
+        public static EM_RES boxChange(ref bool bquit)
+        {
+            EM_RES ret = EM_RES.OK;
+            if (sen_box_in.AssertOFF())
+            {
+                return EM_RES.ERR;
+            }
+            //到获取料盒位置
+
+            ret = PosGetBox.MoveTo(ref bquit, true); //安全
+            if (ret != EM_RES.OK) return ret;
+            //关锁
+            ret = cyl_lock_up.SetOff(ref bquit, 3000);
+            if (ret != EM_RES.OK) return ret;
+            //下降到料盘位
+            ret = PosTrayTop.MoveTo(ref bquit, true);
+            if (ret != EM_RES.OK) return ret;
+            COM.traybox_get.NewBox(Product.EM_CM_RES.OK);
+            COM.traybox_get.SetSta(UI.TrayBox.EM_STA.FULL);
+            return ret;
+        }
+        #endregion
+        /// <summary>
+        /// 委托轴安全防护
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="pos"></param>
+        /// <returns></returns>
+
+        public static EM_RES axZ_Safe(int id, double pos = 0)
+        {
+            EM_RES ret = EM_RES.OK;
+            if (bsafe) return ret;
+            if (sen_box_in.AssertOFF())
+            {
+                ret = cyl_lock_up.SetOff(ref VAR.gsys_set.bquit, 3000);
+                if (ret != EM_RES.OK) return ret;
+            }
+            ret = cyl_tray_out.SetOn(ref VAR.gsys_set.bquit, 3000);
+            if (ret != EM_RES.OK) return ret;
+            return ret;
+        }
+        #region 运行
+        public static void act_run()
+        {
+            try
+            {
+                if (VAR.gsys_set.bquit) return;
+                EM_RES ret = EM_RES.OK;
+                ret = WSRun(ref VAR.gsys_set.bquit);
+                if (ret == EM_RES.OK)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, disc + "完成");
+                }
+                else
+                if (VAR.gsys_set.bquit == false && ret == EM_RES.ERR)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常!");
+                    for (int n = 0; n < 30; n++)
+                    {
+                        VAR.gsys_set.bquit = true;
+                        Thread.Sleep(10);
+                        Application.DoEvents();
+                    }
+                    status = EM_STA.ERR;
+                }
+
+            }
+            catch (Exception e)
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常" + e.ToString());
+                VAR.gsys_set.bquit = true;
+                return;
+            }
+
+        }
+        static EM_RES WSRun(ref bool bquit)
+        {
+            EM_RES ret = EM_RES.OK;
+            if (!isReady) return EM_RES.QUIT;
+            if (sen_plate_at_get.AssertON()) return EM_RES.QUIT;//已经有料盘
+            ret = trayReady(ref bquit);//自动检索料盘并拉出
+            if (ret == EM_RES.OK)
+            {
+                ret = trayOut(ref bquit); return ret;
+            }
+            if (tbox_get.status == TrayBox.EM_STA.EMPTY)  //盒子空的话出料盒
+            {
+                ret = boxOUT(ref bquit); if (ret != EM_RES.OK) return ret;
+                ret = MT.pos_bullet_feed_boxIN.MoveTo(ref bquit, true); //安全
+                if (ret != EM_RES.OK) return ret;
+                if (sen_box_in.AssertON())
+                {
+                    ret = boxChange(ref bquit); if (ret != EM_RES.OK) return ret;
+                }
+                else
+                {
+                    ret = boxIN(ref bquit); if (ret != EM_RES.OK) return ret;
+                }
+                ret = trayReady(ref bquit); if (ret != EM_RES.OK) return ret;
+                ret = trayOut(ref bquit); return ret;
+
+            }
+            else
+            if (tbox_get.status == TrayBox.EM_STA.NOBOX) //盒子空的话进料盒
+            {
+                //进料盒命令
+                ret = boxIN(ref bquit); if (ret != EM_RES.OK) return ret;
+                ret = trayReady(ref bquit); if (ret != EM_RES.OK) return ret;
+                ret = trayOut(ref bquit); return ret;
+            }
+
+            VAR.ErrMsg(disc + GetStaString + "逻辑异常");
+            return EM_RES.ERR;
+
+        }
+        public static Task TaskRun;
+        public static void task_run()
+        {
+            if (TaskRun == null || (TaskRun != null && TaskRun.IsCompleted))
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, "创建出料仓线程");
+                if (TaskRun != null)
+                    TaskRun.Dispose();
+                TaskRun = new Task(act_run);
+                TaskRun.Start();
+            }
+        }
+        #endregion
+        #region 回原
+        public static EM_RES home(ref bool bquit)
+        {
+            EM_RES res = EM_RES.OK;
+            status = EM_STA.HOME;
+            if (!(TaskRun == null || TaskRun.IsCompleted))
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 工站工作中，回原失败!", disc));
+                return EM_RES.ERR;
+            }
+            if (sen_box_in.AssertON())
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 检测到有料盒，回原失败!", disc));
+                return EM_RES.ERR;
+            }
+            res = cyl_lock_up.SetOff(1000);
+            if (res != EM_RES.OK)
+                return res;
+            res = MT.AxisHome(ref bquit, ax_Z);
+            status = EM_STA.STANDBY;
+            return res;
+        }
+        #endregion
+        #region 停止
+        public static void Stop()
+        {
+            ax_Z.bhomequit = true;
+            ax_Z.Stop();
+        }
+        #endregion
+
+    }
+    public  class WsBuBK
+    {
+        #region 硬件和位置
+        public static TrayBox tbox_get = COM.traybox_back;
+        static Product.Tray tray_out = COM.traybox_back.tray_cur;
+        static AXIS ax_Z = COM.traybox_back.ax_z;
+  
+        static Cylinder cyl_tray_in = MT.CYL_bullet_back_plate;//拉盘气缸
+        static GPIO sen_box_in = MT.CKPOS_bull_belt_topos;//皮带进料处感应料盒来
+        static GPIO sen_tray_in = MT.CKPOS_bull_back_plate;
+        static GPIO sen_box_out = MT.CKPOS_bull_back_box;//料盒外出感应
+        static GPIO belet_move = MT.GPIO_OUT_belet;
+        static POS PosBoxOUT = MT.pos_bullet_back_boxOUT;
+        static POS PosSafe = MT.pos_bullet_back_safe;
+        static POS PosTrayLow = MT.pos_bullet_back_check_low;
+        static POS PosTrayTop = MT.pos_bullet_back_check_top;
+        static POS PosBoxIn = MT.pos_bullet_back_boxIN;
+        #endregion
+        public static string warn_msg = "";
+        public static bool isShow = true;//弹窗
+        public static bool isErr;
+        public static EM_STA status = EM_STA.UNKNOW;
+        public static string disc = "料盘移栽工站";
+        public static string GetStaString
+        {
+            get
+            {
+                return status.GetDescription();
+            }
+        }
+        /// <summary>
+        /// 运行条件
+        /// </summary>
+        public static bool isReady
+        {
+            get
+            {
+                if (VAR.gsys_set.bquit) return false;
+          
+                if (!(WSBack.TaskRun == null || WSBack.TaskRun.IsCompleted))
+                    return false;
+                if (!(WsTrayMove.TaskRun == null || WsTrayMove.TaskRun.IsCompleted))
+                    return false;
+                return true;
+            }
+        }
+        public static bool mbOK;
+        public enum EM_STA
+        {
+            [Description("未知")]
+            UNKNOW,
+            [Description("忙")]
+            BUSY,
+            [Description("回零中")]
+            HOME,
+            [Description("就绪")]
+            READY,
+            [Description("盘拉进")]
+            TRAYIN,
+            [Description("准备收料位")]
+            TRAYREADY,
+            [Description("进料盒")]
+            BOXIN,
+            [Description("出料盒")]
+            BOXOUT,
+            [Description("错误")]
+            ERR,
+            [Description("等待")]
+            STANDBY,
+            [Description("等待取料盒")]
+            WAIT
+        }
+        #region 动作函数
+        public static EM_RES trayReady(ref bool bquit)
+        {
+            if (isReady) return EM_RES.QUIT;
+            if (WSBack.tbox_back == null) return EM_RES.QUIT;
+            EM_RES ret = WSBack.tbox_back.TrayReadyIN(ref  bquit);
+            return ret;
+        }
+        public static EM_RES trayIN(ref bool bquit)
+        {
+            status = EM_STA.TRAYIN;
+            if (WSBack.tbox_back == null) return EM_RES.QUIT;
+            EM_RES ret = WSBack.tbox_back.TrayIn(ref  bquit);
+            return ret;
+        }
+        public static EM_RES boxIN(ref bool bquit)
+        {
+            EM_RES res = EM_RES.OK;
+            try
+            {
+                status = EM_STA.BOXIN;
+                int i = 0;
+                //到进料位
+                res = PosBoxIn.MoveTo(ref bquit, true);
+                if (res != EM_RES.OK) return res;
+                //check box在
+                res = belet_move.SetOn();
+                if (res != EM_RES.OK) return res;
+                while (sen_box_in.AssertOFF() && isReady)
+                {
+                    Thread.Sleep(20);
+                    Application.DoEvents();
+                    i++;
+                    if (i > 1000)
+                    {
+                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}等待超时", GetStaString));
+                        res = belet_move.SetOff();
+                        return EM_RES.ERR;
+                    }
+                }
+                for (int j = 0; j < 100; j++)
+                {
+                    Thread.Sleep(30);
+                    Application.DoEvents();
+                    if (!isReady) break;
+                }
+                res = belet_move.SetOff();
+                if (res != EM_RES.OK) return res;
+                return res;
+            }
+            catch(Exception ee)
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}-{1}", disc,ee.ToString() ));
+                return EM_RES.ERR;
+            }
+
+        }
+        public static EM_RES boxOUT(ref bool bquit)
+        {
+            EM_RES res = EM_RES.OK;
+            try
+            {
+                status = EM_STA.BOXOUT;
+                //到出料位
+                res = PosBoxOUT.MoveTo(ref bquit, true);
+                if (res != EM_RES.OK) return res;
+                if (!sen_box_out.AssertON())
+                {
+                    VAR.ErrMsg(string.Format("{0}+{1}无料盒", disc, status.GetDescription()));
+                    return EM_RES.ERR;
+                }
+                //检测到达出料位等待拿走
+                int i = 0;
+                while (sen_box_out.AssertON() && isReady)
+                {
+                    Thread.Sleep(30);
+                    Application.DoEvents();
+                    i++;
+                    if (i > 1000)
+                    {
+                        VAR.ErrMsg(string.Format("{0}+{1}等待拿料盒超时", disc, status.GetDescription()));
+                        return EM_RES.ERR;
+                    }
+                }
+                return res;
+            }
+            catch
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}-{1}未知错误", disc, GetStaString));
+                return EM_RES.ERR;
+            }
+
+        }
+        #endregion
+        public static void act_run()
+        {
+            try
+            {
+                if (VAR.gsys_set.bquit) return;
+                EM_RES ret = EM_RES.OK;
+                ret = WSRun(ref VAR.gsys_set.bquit);
+                if (ret == EM_RES.OK)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, disc + "完成");
+                }
+                else
+                if (VAR.gsys_set.bquit == false && ret == EM_RES.ERR)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常!");
+                    for (int n = 0; n < 30; n++)
+                    {
+                        VAR.gsys_set.bquit = true;
+                        Thread.Sleep(10);
+                        Application.DoEvents();
+                    }
+                    status = EM_STA.ERR;
+                }
+
+            }
+            catch (Exception e)
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常" + e.ToString());
+                VAR.gsys_set.bquit = true;
+                return;
+            }
+
+        }
+        public static EM_RES WSRun(ref bool bquit)
+        {
+            try
+            {
+                EM_RES ret = EM_RES.OK;
+                if (!isReady) return EM_RES.QUIT;
+                ret = trayReady(ref bquit );
+                if (ret == EM_RES.OK)//找到空位就拉一下进去
+                {
+                    ret = trayIN(ref bquit);
+                    return ret;
+                }
+                if (tbox_get.status == TrayBox.EM_STA.FULL)//如果满了就出料盒
+                {
+                    ret = boxOUT(ref bquit);
+                    if (ret != EM_RES.OK) return ret;
+                    ret = boxIN(ref bquit);
+                    if (ret != EM_RES.OK) return ret;
+                    ret = trayReady(ref bquit);
+                    if (ret != EM_RES.OK) return ret;
+                    ret = trayIN(ref bquit);
+                    return ret;
+
+                }
+                if (tbox_get.status == TrayBox.EM_STA.EMPTY)//如果没料盒了就进料盒
+                {
+                    ret = boxIN(ref bquit);
+                    if (ret != EM_RES.OK) return ret;
+                    ret = trayReady(ref bquit);
+                    if (ret != EM_RES.OK) return ret;
+                    ret = trayIN(ref bquit);
+                    return ret;
+                }
+
+                Stop();
+                VAR.ErrMsg(disc + "料盒异常");
+                return EM_RES.ERR;
+            }
+
+            catch
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}-{1}未知错误", disc, GetStaString));
+                return EM_RES.ERR;
+            }
+
+        }
+        public static Task TaskRun;
+        public static void task_run()
+        {
+            if (TaskRun == null || (TaskRun != null && TaskRun.IsCompleted))
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, "创建料仓线程");
+                if (TaskRun != null)
+                    TaskRun.Dispose();
+                TaskRun = new Task(act_run);
+                TaskRun.Start();
+            }
+        }
+        public static EM_RES home(ref bool bquit)
+        {
+            EM_RES res = EM_RES.OK;
+            if (!(TaskRun == null || TaskRun.IsCompleted))
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 工站工作中，回原失败!", disc));
+                return EM_RES.ERR;
+            }
+            if (sen_box_out.AssertON())
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 检测到有料盒，回原失败!", disc));
+                return EM_RES.ERR;
+            }
+            res = MT.AxisHome(ref bquit, ax_Z);
+            return res;
+        }
+        public static void Stop()
+        {
+            ax_Z.bhomequit = true;
+            ax_Z.Stop();
+        }
+        public static EM_RES axZ_Safe(int id, double pos = 0)
+        {
+            EM_RES ret = EM_RES.OK;
+            ret = cyl_tray_in.SetOff(ref VAR.gsys_set.bquit, 3000);
+            return ret;
+        }
+    }
+    public  class WsTrayMove 
+    {
+       
+        public static GPIO sen_tray_get = MT.CKPOS_MOVE_get_plate;
+        public static GPIO sen_tray_store = MT.CKPOS_MOVE_middle_plate;
+        public static GPIO sen_tray_back = MT.CKPOS_MOVE_back_plate;
+        public static Cylinder vacu_move = MT.VACUM_move_plate;
+        public static AXIS ax_Z = MT.AXIS_bullet_move;
+
+        public static EM_STA status = EM_STA.UNKNOW;
+        public static bool bhome = false;
+        public static string disc = "料盘移栽工站";
+        public static string GetStaString
+        {
+            get
+            {
+                return status.GetDescription();
+            }
+        }
+        public static bool isReady
+        {
+            get
+            {
+                if (VAR.gsys_set.bquit) return false;
+       
+                if (!(WSBack.TaskRun == null || WSBack.TaskRun.IsCompleted))
+                {
+                    status = EM_STA.BUSY;
+                    return false;
+                }
+                if (!(WSGet.TaskRun == null || WSGet.TaskRun.IsCompleted))
+                {
+                    status = EM_STA.BUSY;
+                    return false;
+                }
+                // if (VAR.gsys_set.status != EM_SYS_STA.RUN) return false;
+                return true;
+            }
+        }
+        public enum EM_STA
+        {
+            [Description("未知")]
+            UNKNOW,
+            [Description("忙")]
+            BUSY,
+            [Description("回零中")]
+            HOME,
+            [Description("就绪")]
+            READY,
+            [Description("空盘上料")]
+            PLACE,
+            [Description("空盘存料")]
+            PICK,
+            [Description("错误")]
+            ERR,
+            [Description("安全位")]
+            SAFE,
+            [Description("等待")]
+            STANDBY
+        }
+        //下降放料
+        static EM_RES m_down_put(ref bool bquit)
+        {
+            try
+            {
+                EM_RES ret = EM_RES.OK;
+                //检测真空
+                if (!vacu_move.io_sen_on.AssertON())
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "吸嘴无料", disc, GetStaString));
+                    return EM_RES.ERR;
+
+                }
+
+                //气缸下降
+                ret = MT.CYL_bullet_move_plate_up.SetOn(ref bquit, 3000);
+                if (ret != EM_RES.OK) return ret;
+                ret = MT.VACUM_move_plate.SetOff(ref bquit);
+                if (ret != EM_RES.OK) return ret;
+                Thread.Sleep(500);
+                Application.DoEvents();
+                Thread.Sleep(500);
+                Application.DoEvents();
+                Thread.Sleep(500);
+                Application.DoEvents();
+                Thread.Sleep(500);
+                Application.DoEvents();
+                Thread.Sleep(500);
+                Application.DoEvents();
+                //气缸上升
+                ret = MT.CYL_bullet_move_plate_up.SetOff(ref bquit, 3000);
+                if (ret != EM_RES.OK) return ret;
+                //检测真空
+                if (!vacu_move.io_sen_on.AssertOFF())
+                    return EM_RES.ERR;
+                else
+                    return EM_RES.OK;
+            }
+            catch
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "未知错误", disc, GetStaString));
+                return EM_RES.ERR;
+            }
+        }
+        public static EM_RES ck_ax_safe(int id, double pos = 0)
+        {
+            EM_RES ret = EM_RES.OK;
+            if (MT.CYL_bullet_move_plate_up == null) return EM_RES.ERR;
+            if (MT.CYL_bullet_move_plate_up.io_sen_off.AssertON()) return EM_RES.OK;
+            else
+                ret = MT.CYL_bullet_move_plate_up.SetOff(ref VAR.gsys_set.bquit, 3000);
+            return ret;
+
+        }
+        //移栽下降取料
+        static EM_RES m_down_get(ref bool bquit)
+        {
+            EM_RES ret = EM_RES.OK;
+            try
+            {
+                ret = MT.VACUM_move_plate.SetOn(ref bquit);
+                if (ret != EM_RES.OK) return ret;
+                //气缸下降
+                ret = MT.CYL_bullet_move_plate_up.SetOn(ref bquit, 3000);
+                //打开真空
+                if (ret != EM_RES.OK) return ret;
+                ret = MT.VACUM_move_plate.SetOn(ref bquit, 6000);
+                if (ret != EM_RES.OK) return ret;
+                //气缸升
+                ret = MT.CYL_bullet_move_plate_up.SetOff(ref bquit, 3000);
+                if (ret != EM_RES.OK) return ret;
+                //检测真空
+                if (MT.VACUM_move_plate.io_sen_on.AssertOFF())
+                    return EM_RES.ERR;
+                else
+                    return EM_RES.OK;
+            }
+
+            catch
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "未知错误", disc, GetStaString));
+                return EM_RES.ERR;
+            }
+            finally
+            {
+                ret = MT.CYL_bullet_move_plate_up.SetOff(ref bquit, 3000);
+            }
+
+        }
+        //移栽取料
+        public static EM_RES m_GET(ref bool bquit)
+        {
+            EM_RES ret = EM_RES.OK;
+            try
+            {
+                status = EM_STA.PICK;
+                //检测料盘在位
+                if (MT.CKPOS_MOVE_get_plate.isOFF) return EM_RES.OK;
+                ret = MT.CYL_bullet_move_plate_up.SetOff(ref bquit, 3000);
+                if (ret != EM_RES.OK) return ret;
+                //轴运动                    
+
+                ret = MT.pos_bullet_move_get_tray.MoveTo(ref bquit, true);
+                if (ret != EM_RES.OK) return ret;
+                ret = m_down_get(ref bquit);
+                if (ret != EM_RES.OK) return ret;
+                //检测料盘不在位
+
+                if (!MT.CKPOS_MOVE_get_plate.AssertON())
+                    return EM_RES.ERR;
+                ret = MT.pos_bullet_move_center.MoveTo(ref bquit, true);
+                if (ret != EM_RES.OK) return ret;
+                ret = m_down_put(ref bquit);
+                if (ret != EM_RES.OK) return ret;
+                //检测料盘在位
+                if (MT.CKPOS_MOVE_get_plate.AssertON())
+                    return EM_RES.ERR;
+                else
+
+                    return EM_RES.OK;
+            }
+
+            catch
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "未知错误", disc, GetStaString));
+                return EM_RES.ERR;
+            }
+
+
+
+        }
+        public static EM_RES m_PUT(ref bool bquit)
+        {
+            EM_RES ret = EM_RES.OK;
+            try
+            {
+                //检测有无料盘            
+                ret = MT.pos_bullet_move_center.MoveTo(ref bquit);
+                if (ret != EM_RES.OK) return ret;
+                //检测料盘在位                    
+                if (!MT.CKPOS_MOVE_middle_plate.AssertON())
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "中间位无料盘请上料盘从新开始", disc, GetStaString));
+                    return EM_RES.ERR;
+                }
+                ret = m_down_get(ref bquit);
+                if (ret != EM_RES.OK) return ret;
+                ret = MT.pos_bullet_move_put.MoveTo(ref bquit, true);
+                if (ret != EM_RES.OK) return ret;
+                ret = m_down_put(ref bquit);
+                if (ret != EM_RES.OK) return ret;
+                //检测料盘在位
+                if (!MT.CKPOS_MOVE_back_plate.AssertON())
+                    return EM_RES.ERR;
+                return ret;
+            }
+            catch
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "未知错误", disc, GetStaString));
+                return EM_RES.ERR;
+
+            }
+
+        }
+        //移栽安全位
+        public static EM_RES m_SAFE(ref bool bquit)
+        {
+            EM_RES ret = EM_RES.OK;
+
+            try
+            {
+
+                //轴运动       
+                ret = MT.pos_bullet_move_safe.MoveTo(ref bquit, true);
+                if (ret != EM_RES.OK) return ret;
+                if (!ax_Z.isORG)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "移栽轴不在原点", disc, GetStaString));
+                    return EM_RES.ERR;
+                }
+                else
+                    return EM_RES.OK;
+            }
+            catch
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "未知错误", disc, GetStaString));
+                return EM_RES.ERR;
+            }
+        }
+        public static void act_run()
+        {
+            try
+            {
+                if (VAR.gsys_set.bquit) return;
+                EM_RES ret = EM_RES.OK;
+                ret = WSRun(ref VAR.gsys_set.bquit);
+                if (ret == EM_RES.OK)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, disc + "完成");
+                }
+                else
+                if (VAR.gsys_set.bquit == false && ret == EM_RES.ERR)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常!");
+                    for (int n = 0; n < 30; n++)
+                    {
+                        VAR.gsys_set.bquit = true;
+                        Thread.Sleep(10);
+                        Application.DoEvents();
+                    }
+                    status = EM_STA.ERR;
+                }
+
+            }
+            catch (Exception e)
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常" + e.ToString());
+                VAR.gsys_set.bquit = true;
+                return;
+            }
+
+        }
+        public static EM_RES WSRun(ref bool bquit)
+        {
+
+            try
+            {
+                EM_RES ret = EM_RES.OK;
+                if (!isReady)  return ret;
+                if (sen_tray_get.AssertON())//有料盘在把盘收起来
+                {
+                    ret = m_GET(ref bquit);
+                    if (ret != EM_RES.OK) return ret;
+                    WSGet.tray_now = null;
+                }
+                if (!sen_tray_back.AssertON())//收料盘处无盘，进行上盘
+                {
+                    if (sen_tray_store.AssertON())
+                    {
+                        ret = m_PUT(ref bquit);
+                        if (ret != EM_RES.OK) return ret;
+                        WSBack.tray_now = COM.product.TrayBackOK;
+                        
+                    }
+                    else
+                    {
+                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "中间无空盘", disc, GetStaString));
+                        status = EM_STA.ERR;
+                        return EM_RES.ERR;
+                    }
+                }
+                if (!ax_Z.isORG)
+                {
+                    ret = m_SAFE(ref bquit);
+                     return ret;
+                }
+                return ret;
+
+            }
+            catch (Exception ee)
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "未知错误", disc, ee.ToString()));
+                return EM_RES.ERR;
+            }
+
+
+        }
+        public static Task TaskRun;
+        public static void task_run()
+        {
+            if (TaskRun == null || (TaskRun != null && TaskRun.IsCompleted))
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, "创建料仓线程");
+                if (TaskRun != null)
+                    TaskRun.Dispose();
+                TaskRun = new Task(act_run);
+                TaskRun.Start();
+
+            }
+        }
+        public static EM_RES home(ref bool bquit)
+        {
+            EM_RES ret = EM_RES.OK;
+            if (bquit) return EM_RES.QUIT;
+            status = EM_STA.HOME;
+            if (!((WSGet.TaskRun == null || WSGet.TaskRun.IsCompleted) &&
+               (WSBack.TaskRun == null || WSBack.TaskRun.IsCompleted)))
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 取料和收料工站未退出!", disc));
+                return EM_RES.ERR;
+            }
+            if (!WSGet.ax_x.isORG)
+            {
+                ret = WSGet.ax_z.MoveTo(ref bquit, 99999, 5000);
+                if (ret != EM_RES.OK) return ret;
+                ret = WSGet.ax_x.MoveTo(ref bquit, 99999, 5000);
+                if (ret != EM_RES.OK) return ret;
+                if (!WSGet.ax_x.isELP)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} q取料工站到正限位异常!", disc));
+                    return EM_RES.ERR;
+                }
+
+            }
+            if (!WSBack.ax_x.isORG)
+            {
+                ret = WSBack.ax_z.MoveTo(ref bquit, 99999, 5000);
+                if (ret != EM_RES.OK) return ret;
+                ret = WSBack.ax_x.MoveTo(ref bquit, 99999, 5000);
+                if (ret != EM_RES.OK) return ret;
+                if (!WSBack.ax_x.isELP)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 取料工站到正限位异常!", disc));
+                    return EM_RES.ERR;
+                }
+
+            }
+            ret = MT.AxisHome(ref bquit, ax_Z);
+            if (ret != EM_RES.OK) return ret;
+            else
+                status = EM_STA.STANDBY;
+            return ret;
+        }
+        public static void Stop()
+        {
+            ax_Z.bhomequit = true;
+            ax_Z.Stop();
+        }
+
+    }
+    #endregion
+
+   
     #region 取料
     public class WSGet
     {
@@ -2463,7 +2540,9 @@ namespace UI
             [Description("等待料盘")]
             WAIT,
             [Description("错误")]
-            ERR
+            ERR,
+            [Description("退出")]
+            QUIET
         }
 
         public static bool isReady
@@ -2602,11 +2681,9 @@ namespace UI
         /// </summary>     
         public static EM_RES m_ActGet(ref bool bquit)
         {
-            EM_RES ret = EM_RES.OK;
-          
+            EM_RES ret = EM_RES.OK;        
             try
-            {
-                
+            {                
                 tray_now = COM.product.TrayGet;
                 if (tray_now == null)
                 {
@@ -2625,7 +2702,6 @@ namespace UI
                 if (ret != EM_RES.OK) return ret;
                 ret = ps_sf.MoveTo(ref bquit, true); //安全
                 if (ret != EM_RES.OK) return ret;
-
                 ret = tray_now.ToPosId( MT.pos_get_plate_star,ref bquit);   //到取料位置
                 if (ret != EM_RES.OK) return ret;
                 ret = ps_zDown.MoveTo(ref bquit, true);
@@ -2656,7 +2732,8 @@ namespace UI
             }
             finally
             {
-                ret = ps_zUP.MoveTo(ref bquit, true);
+                 ps_zUP.MoveTo(ref bquit, true);
+               
               
 
             }
@@ -2719,11 +2796,11 @@ namespace UI
                     ret = ps_put_L.MoveTo(ref bquit, true); //安全
                     if (ret != EM_RES.OK) return ret;
                     //POS mPos = new POS(MT.AXIS_GET_X, MT.AXIS_GET_Y, MT.AXIS_GET_A,null, "视觉偏移", 0, 0, Move_L);
-                    ret = MT.AXIS_GET_X.MoveTo(ref VAR.gsys_set.bquit, MT.AXIS_GET_X.fcmd_pos + Move_L.x, 2000);
+                    ret = MT.AXIS_GET_X.MoveTo(ref bquit, MT.AXIS_GET_X.fcmd_pos + Move_L.x, 2000);
                     if (ret != EM_RES.OK) return ret;
-                    ret = MT.AXIS_GET_Y.MoveTo(ref VAR.gsys_set.bquit, MT.AXIS_GET_X.fcmd_pos + Move_L.y, 2000);
+                    ret = MT.AXIS_GET_Y.MoveTo(ref bquit, MT.AXIS_GET_X.fcmd_pos + Move_L.y, 2000);
                     if (ret != EM_RES.OK) return ret;
-                    ret = MT.AXIS_GET_A.MoveTo(ref VAR.gsys_set.bquit, MT.AXIS_GET_A.fcmd_pos + Move_L.z, 2000);
+                    ret = MT.AXIS_GET_A.MoveTo(ref bquit, MT.AXIS_GET_A.fcmd_pos + Move_L.z, 2000);
                     if (ret != EM_RES.OK) return ret;
                     ret = m_ActPut(ref bquit);
                     if (ret != EM_RES.OK) return ret;
@@ -2740,11 +2817,11 @@ namespace UI
                         if (ret != EM_RES.OK) return ret;
                         ret = ps_put_R.MoveTo(ref bquit, true); //安全
                         if (ret != EM_RES.OK) return ret;
-                        ret = MT.AXIS_GET_X.MoveTo(ref VAR.gsys_set.bquit, MT.AXIS_GET_X.fcmd_pos + Move_R.x, 2000);
+                        ret = MT.AXIS_GET_X.MoveTo(ref bquit, MT.AXIS_GET_X.fcmd_pos + Move_R.x, 2000);
                         if (ret != EM_RES.OK) return ret;
-                        ret = MT.AXIS_GET_Y.MoveTo(ref VAR.gsys_set.bquit, MT.AXIS_GET_X.fcmd_pos + Move_R.y, 2000);
+                        ret = MT.AXIS_GET_Y.MoveTo(ref bquit, MT.AXIS_GET_X.fcmd_pos + Move_R.y, 2000);
                         if (ret != EM_RES.OK) return ret;
-                        ret = MT.AXIS_GET_A.MoveTo(ref VAR.gsys_set.bquit, MT.AXIS_GET_A.fcmd_pos + Move_R.z, 2000);
+                        ret = MT.AXIS_GET_A.MoveTo(ref bquit, MT.AXIS_GET_A.fcmd_pos + Move_R.z, 2000);
                         if (ret != EM_RES.OK) return ret;
                         ret = m_ActPut(ref bquit);
                         if (ret != EM_RES.OK) return ret;
@@ -2794,61 +2871,92 @@ namespace UI
             }
 
         }
-        static Mact ACTGET =  new Mact(m_ActGet);
-        static Mact TOPHOTO = new Mact(m_ToPhoto);
-        static Mact TOPUT = new Mact(m_ToPut);
-        static Mact ACTPUT = new Mact(m_ActPut);
+
+
         public static void act_run()
         {
+            try
+            {
+                if (VAR.gsys_set.bquit) return;
+                EM_RES ret = EM_RES.OK;
+                ret = WSRun(ref VAR.gsys_set.bquit);
+                if (ret == EM_RES.OK)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, disc + "完成");
+                }
+                else
+                if (VAR.gsys_set.bquit == false && ret == EM_RES.ERR)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常!");
+                    for (int n = 0; n < 30; n++)
+                    {
+                        VAR.gsys_set.bquit = true;
+                        Thread.Sleep(10);
+                        Application.DoEvents();
+                    }
+                    status = EM_STA.ERR;
+                }
+
+            }
+            catch (Exception e)
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常" + e.ToString());
+                VAR.gsys_set.bquit = true;
+                return;
+            }
+
+        }
+        public static EM_RES WSRun(ref bool bquit)
+        {
             EM_RES ret = EM_RES.OK;
-            ////gy0114测试系统
-            //bOK = true;
-            //return;
+            int i = 0;
             try
             {
                 if (bOK)
                 {
-                    status = EM_STA.READY;          
+                    status = EM_STA.READY;
+                    return EM_RES.OK;
                 }
-                if (!isReady) return ;
-        
+                if (!isReady) return EM_RES.QUIT;
                 if (!sen_plate_at_get.AssertON())//检测盘
                 {
-                    tray_now = null;
+                   // tray_now = null;
                     WsBuFD.task_run();//出料盘
                     status = EM_STA.WAIT;
                     Stop();
+                    return EM_RES.WAIT;
                 }
-                else
+                if (tray_now == null)
                 {
-                    
-                    tray_now = COM.product.TrayGet;
-                    if (tray_now==null)
-                    {
-                        return;
-                    }
-                    else if ( tray_now.bEmpty )  //空盘收料
-                    {
-                        WsTrayMove.task_run();
-                        status = EM_STA.WAIT;
-                        Stop();
-                    }
-                    if (!WsTrayMove.ax_Z.isORG)
-                    {
-                        WsTrayMove.task_run();
-                        status = EM_STA.WAIT;
-                        Stop();
-                    }
-                    Action.DoAct(ACTGET,string.Format("{0}+{1}",disc,GetStaString));
-                    Action.DoAct(TOPHOTO, string.Format("{0}+{1}", disc, GetStaString));
-                    Action.DoAct(TOPUT, string.Format("{0}+{1}", disc, GetStaString));            
+                    // tray_now = COM.product.TrayGet;
+                    return EM_RES.ERR;
                 }
-
+                else if (tray_now.bEmpty)  //空盘收料
+                {
+                    WsTrayMove.task_run();
+                    status = EM_STA.WAIT;
+                    Stop();
+                    Thread.Sleep(100);
+                    Application.DoEvents();
+                    return EM_RES.WAIT;
+                }
+                if (!WsTrayMove.ax_Z.isORG)
+                {
+                    WsTrayMove.task_run();
+                    status = EM_STA.WAIT;
+                    Stop();
+                    Thread.Sleep(100);
+                    Application.DoEvents();
+                    return EM_RES.WAIT;
+                }
+                ret = m_ActGet(ref bquit); if (ret != EM_RES.OK) return ret;
+                ret = m_ToPhoto(ref bquit); if (ret != EM_RES.OK) return ret;
+                ret = m_ToPut(ref bquit);  return ret;
             }
             catch
             {
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} {1}未知错误!", disc, GetStaString));
-                return;
+                return EM_RES.ERR;
             }
         }
         public static void task_run()
@@ -2898,7 +3006,7 @@ namespace UI
     }
     #endregion
     #region   收料
-    public static class WSBack
+    public  class WSBack 
     {
         public static TrayBox tbox_back = COM.traybox_back;
         public static Product.Tray tray_now =COM.product.TrayBackOK;
@@ -2920,8 +3028,6 @@ namespace UI
         static POS ps_get_to_R = MT.pos_back_to_R;
         static POS ps_zDown = MT.pos_back_z_dwn;
         static POS ps_zUP = MT.pos_back_z_up;
-
-
         static POS ps_row = MT.pos_back_plate_row;
         static POS ps_col = MT.pos_back_plate_line;
         static POS ps_star = MT.pos_back_plate_star;
@@ -2984,14 +3090,10 @@ namespace UI
             [Description("错误")]
             ERR,
             [Description("等待料盘")]
-            WAIT
-        }
-        //static void AllAct()
-        //{
-        //    ActGet = new Mact(m_ActGet);
-        //    ToGet = new Mact(m_ToGet);
-        //    ActPut = new Mact(m_ActPut);
-        //}
+            WAIT,
+            [Description("退出")]
+            QUIET
+        }       
         //需要保存，当前状态     
         /// <summary>
         /// 取料料模块复位
@@ -3046,8 +3148,6 @@ namespace UI
             ax_a.bhomequit = true;
             ax_a.Stop();
         }
-
-
         public static EM_RES ck_ax_safe(int id, double pos = 0)
         {
             bool bquit = false;
@@ -3085,7 +3185,6 @@ namespace UI
         /// <summary>
         /// 准备取料
         /// </summary>   
-
         public static bool isReady
         {
             get
@@ -3099,9 +3198,6 @@ namespace UI
                 return true;
             }
         }
-
-   
-
         /// <summary>
         /// 从安全位开始到取料动作
         /// </summary>     
@@ -3199,13 +3295,9 @@ namespace UI
                     VAR.ErrMsg(string.Format("{0}{1} 吸嘴无料", disc, GetStaString));
                     return EM_RES.ERR;
                 }
-
-              
-           
-                   
-
+   
                 //需要根据状态放不同料盘-gy-1227
-                ret = tray_now.ToPosId(MT.pos_back_plate_star,ref VAR.gsys_set.bquit, tray_now.put_id);
+                ret = tray_now.ToPosId(MT.pos_back_plate_star,ref bquit, tray_now.put_id);
                 if (ret != EM_RES.OK) return ret;
                 ret = ps_zDown.MoveTo(ref bquit, true);
                 if (ret != EM_RES.OK) return ret;
@@ -3236,61 +3328,90 @@ namespace UI
         {
             try
             {
+                if (VAR.gsys_set.bquit) return;
                 EM_RES ret = EM_RES.OK;
-                bOK = true;
+                ret = WSRun(ref VAR.gsys_set.bquit);
+                if (ret == EM_RES.OK)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, disc + "完成");
+                }
+                else
+                if (VAR.gsys_set.bquit == false && ret == EM_RES.ERR)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常!");
+                    for (int n = 0; n < 30; n++)
+                    {
+                        VAR.gsys_set.bquit = true;
+                        Thread.Sleep(10);
+                        Application.DoEvents();
+                    }
+                    status = EM_STA.ERR;
+                }
+
+            }
+            catch (Exception e)
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常" + e.ToString());
+                VAR.gsys_set.bquit = true;
                 return;
+            }
+
+        }
+        public static EM_RES WSRun(ref bool bquit)
+        {
+            try
+            {
+                EM_RES ret = EM_RES.OK;
                 if (bOK)
                 {
                     status = EM_STA.READY;
-                    goto MEND;
+                    Stop();
+                    return ret;
                 }
-                if (!isReady) goto MEND;
-
-                if (!WsTrayMove.sen_tray_back.AssertON())//检测盘不在位
+                if (!isReady)
                 {
-                    tray_now = null;
+                    Stop();
+                    return EM_RES.QUIT;
+                }
+
+                if (!WsTrayMove.sen_tray_back.AssertON()|| tray_now == null)//检测盘不在位
+                {
+                  //  tray_now = null;
                     WsBuFD.task_run();//出料盘
                     status = EM_STA.WAIT;
-                    goto MEND;
+                    Stop();
+                    return EM_RES.WAIT;
                 }
-                tray_now = COM.product.TrayBackOK;
-                if (tray_now == null) return;
+             //   tray_now = COM.product.TrayBackOK;
+            
                 if (tray_now.bFull && WsTrayMove.sen_tray_back.AssertON())  //满盘进料
                 {
                     WsTrayMove.task_run();
-                    goto MEND;
+                    Stop();
+                    status = EM_STA.WAIT;
+                    return EM_RES.WAIT;
                 }
                 if (!WsTrayMove.ax_Z.isORG)
                 {
                     WsTrayMove.task_run();
                     status = EM_STA.WAIT;
-                    goto MEND;
-                }
-                ret = m_ToGet(ref VAR.gsys_set.bquit);
-                if (ret != EM_RES.OK) goto MEND;
-                ret = m_ActGet(ref VAR.gsys_set.bquit);
-                if (ret != EM_RES.OK) goto MEND;
-                ret = m_ActPut(ref VAR.gsys_set.bquit);
-                if (ret != EM_RES.OK) goto MEND;
+                    Stop();
+                    return EM_RES.WAIT;
+                }               
+                ret = m_ToGet(ref bquit);if (ret != EM_RES.OK) return ret;
+                ret = m_ActGet(ref bquit); if (ret != EM_RES.OK) return ret;
+                ret = m_ActPut(ref bquit); if (ret != EM_RES.OK) return ret;
                 if (!ax_y.isORG)
                     ret = ps_sf.MoveTo(ref VAR.gsys_set.bquit, true);
-                if (ret != EM_RES.OK) goto MEND;
+                return ret;
 
-                MEND:
-                if (!VAR.gsys_set.bquit)
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "运行失败", disc, GetStaString));
-                    VAR.gsys_set.bquit = true;
-                }
-                status = EM_STA.ERR;
-                Action.stop();
-                Stop();
             }
             catch (Exception ee)
             {
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "运行失败", disc, ee.ToString()));
                 Action.stop();
                 status = EM_STA.ERR;
+                return EM_RES.ERR;
             }
 
         }
@@ -3339,6 +3460,7 @@ namespace UI
             }
 
         }
+        
     }
     #endregion
     #region AA上料
@@ -3410,8 +3532,14 @@ namespace UI
             }
 
         }
-        public static bool bAAcmd;//收到AA上料命令
-        public static bool bRput;//右放料完成
+        /// <summary>
+        /// 收到AA上料命令
+        /// </summary>
+        public static bool bAAcmd;
+        /// <summary>
+        /// 右放料完成
+        /// </summary>
+        public static bool bRput;
 
         static ST_XYZ Move_L;
         public enum EM_STA
@@ -3437,11 +3565,11 @@ namespace UI
             [Description("错误")]
             ERR,
             [Description("拍照")]
-            PHOTO
+            PHOTO,
+            [Description("退出")]
+            QUIET
         }
         public static bool isErr;
-
-
         public static bool isReady
         {
             get
@@ -3458,11 +3586,9 @@ namespace UI
                 return status.GetDescription() + "过程";
 
             }
-        }
-
-        //执行委托动作函数
-      
+        }   
         public static EM_STA status = EM_STA.UNKNOW;
+    
         public static EM_RES ck_ax_safe(int id, double pos = 0)
         {
 
@@ -3547,8 +3673,6 @@ namespace UI
             ax_a.bhomequit = true;
             ax_a.Stop();
         }
-
-
         /// <summary>
         /// 从安全位开始到取料动作
         /// </summary>     
@@ -3685,11 +3809,11 @@ namespace UI
             status = EM_STA.PLACE_L;
             ret = ps_put_L.MoveTo(ref bquit, true);
             if (ret != EM_RES.OK) goto MSTOP;
-            ret = MT.AXIS_FEED_X.MoveTo(ref VAR.gsys_set.bquit, MT.AXIS_FEED_X.fcmd_pos + Move_L.x, 3000);
+            ret = MT.AXIS_FEED_X.MoveTo(ref bquit, MT.AXIS_FEED_X.fcmd_pos + Move_L.x, 3000);
             if (ret != EM_RES.OK) goto MSTOP;
-            ret = MT.AXIS_FEED_Y.MoveTo(ref VAR.gsys_set.bquit, MT.AXIS_FEED_Y.fcmd_pos + Move_L.y, 3000);
+            ret = MT.AXIS_FEED_Y.MoveTo(ref bquit, MT.AXIS_FEED_Y.fcmd_pos + Move_L.y, 3000);
             if (ret != EM_RES.OK) goto MSTOP;
-            ret = MT.AXIS_FEED_A.MoveTo(ref VAR.gsys_set.bquit, MT.AXIS_FEED_A.fcmd_pos + Move_L.z, 3000);
+            ret = MT.AXIS_FEED_A.MoveTo(ref bquit, MT.AXIS_FEED_A.fcmd_pos + Move_L.z, 3000);
             if (ret != EM_RES.OK) goto MSTOP;
             ret = ps_zDwn.MoveTo(ref bquit, true);
             if (ret != EM_RES.OK) goto MSTOP;
@@ -3766,63 +3890,77 @@ namespace UI
 
             return ret;
         }
-
         public static void act_run()
         {
             try
             {
+                if (VAR.gsys_set.bquit) return;
                 EM_RES ret = EM_RES.OK;
-                //gy0114
-                bOK = true;
-                if (bOK) return;
-                if (!isReady) return;
-                Thread.Sleep(20);
-                Application.DoEvents();
-                if (bLput && bRput) goto MSTOP;
-                if (!is_get_L && !bLput)
+                ret = WSRun(ref VAR.gsys_set.bquit);
+                if (ret == EM_RES.OK)
                 {
-                    ret = m_ActGet_L(ref VAR.gsys_set.bquit);
-                    if (ret != EM_RES.OK)
-                        goto MSTOP;
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, disc + "完成");
                 }
-                if (!bAAcmd && !UI.Action.bNullRun)
-                    goto MSTOP;
-                if (!is_get_R && !bRput)
+                else
+                if (VAR.gsys_set.bquit == false && ret == EM_RES.ERR)
                 {
-                    ret = m_ActGet_R(ref VAR.gsys_set.bquit);
-                    if (ret != EM_RES.OK)
-                        goto MSTOP;
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常!");
+                    for (int n = 0; n < 30; n++)
+                    {
+                        VAR.gsys_set.bquit = true;
+                        Thread.Sleep(10);
+                        Application.DoEvents();
+                    }
+                    status = EM_STA.ERR;
+                }
+
+            }
+            catch (Exception e)
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常" + e.ToString());
+                VAR.gsys_set.bquit = true;
+                return;
+            }
+
+        }
+        public static EM_RES WSRun(ref bool bquit)
+        {
+            try
+            {
+                EM_RES ret = EM_RES.OK;
+                if (!isReady || bOK) return EM_RES.QUIT;
+                if (bLput && bRput) return EM_RES.QUIT;
+                if (!is_get_L && !bLput)    //左取料
+                {
+                    ret = m_ActGet_L(ref bquit);
+                    if (ret != EM_RES.OK) return ret;
+                }
+                if (!bAAcmd && !UI.Action.bNullRun)//如果没有收到命令就反复在此等待
+                   return EM_RES.WAIT;
+                if (!is_get_R && !bRput)//右边取料
+                {
+                    ret = m_ActGet_R(ref bquit);
+                    if (ret != EM_RES.OK) return ret;
                 }
                 if (!bLput)
                 {
-                    ret = m_ToPhoto(ref VAR.gsys_set.bquit);
-                    if (ret != EM_RES.OK)
-                        goto MSTOP;
-                    ret = m_ActPut_L(ref VAR.gsys_set.bquit);
-                    if (ret != EM_RES.OK)
-                        goto MSTOP;
+                    ret = m_ToPhoto(ref bquit);
+                    if (ret != EM_RES.OK) return ret;
+                    ret = m_ActPut_L(ref bquit);
+                    if (ret != EM_RES.OK) return ret;
                 }
                 if (!bRput)
                 {
-                    ret = m_ActPut_R(ref VAR.gsys_set.bquit);
-                    if (ret != EM_RES.OK)
-                        goto MSTOP;
+                    ret = m_ActPut_R(ref bquit);
+                    
+                        return ret;
                 }
-            MSTOP:
-                if (!VAR.gsys_set.bquit)
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "运行失败", disc, GetStaString));
-                    VAR.gsys_set.bquit = true;
-                }
-                status = EM_STA.ERR;
-                Action.stop();
-                Stop();
+                return EM_RES.ERR;
             }
             catch (Exception ee)
             {
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "运行失败", disc, ee.ToString()));
-                Action.stop();
-                status = EM_STA.ERR;
+                return EM_RES.ERR;
             }
         }
         public static Task TaskRun;
@@ -3864,7 +4002,7 @@ namespace UI
     }
     #endregion
     #region 转盘
-    public static class WSROLL
+    public  class WSROLL
     {
         public static Cylinder cyl_ck_up = MT.CYL_check_up;
         public static Cylinder cyl_open = MT.CYL_cover_open;
@@ -3872,12 +4010,10 @@ namespace UI
         public static GPIO sen_open = MT.GPIO_IN_code_open;
         public static GPIO sen_closed = MT.GPIO_IN_code_closed;
         public static List<Cylinder> VacumRoll = MT.List_vacu_roll;
-
         public static GPIO sen_roll_topos = MT.CKPOS_roll_plate_topos;
         public static GPIO sen_home = MT.CKPOS_roll_plate_home_point;
         public static GPIO roll_star = MT.GPIO_OUT_roll_plate;
-        public static GPIO roll_topos = MT.CKPOS_roll_plate_topos;
-     
+        public static GPIO roll_topos = MT.CKPOS_roll_plate_topos;     
         public static string disc = "上料工站-";
   
         public static bool bRollOK;
@@ -3945,6 +4081,7 @@ namespace UI
                 return (get_id + 3) % pos_num;
             }
         }
+      
         public enum STA_MOD
         {
             [Description("未知")]
@@ -4044,7 +4181,6 @@ namespace UI
         //    ERR,
         //}
         //public static STA_AA Client_Sta;
-
         /// <summary>
         /// 转盘安全检测
         /// </summary>
@@ -4131,6 +4267,79 @@ namespace UI
            
 
         }
+        public static EM_RES mact_roll(ref bool bquit)
+        {
+            EM_RES res = EM_RES.OK;
+            try
+            {
+                status = EM_STA.ROLL;
+                int i, j;
+                if (!isReady) return EM_RES.QUIT;
+                res = roll_star.SetOff();
+                if (res != EM_RES.OK) return res;
+                res = ck_roll_safe(0);
+                if (res != EM_RES.OK) return res;
+                res = cyl_ck_up.SetOff(ref bquit, 3000);
+                if (res != EM_RES.OK) return res;
+                res = roll_star.SetOn();
+                if (res != EM_RES.OK) return res;
+                i = 0; j = 0;
+                while (roll_topos.isOFF && isReady)
+                {
+                    Thread.Sleep(5);
+                    Application.DoEvents();
+                    i++;
+                    if (i > 1000)
+                    {
+                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "转盘运动等待出位超时", disc, GetStaString));
+                        return EM_RES.ERR;
+                    }
+
+                }
+                while (roll_topos.isON && isReady)
+                {
+
+                    Thread.Sleep(5);
+                    Application.DoEvents();
+                    j++;
+                    if (j > 1000)
+                    {
+                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "转盘运动等待到位超时", disc, GetStaString));
+                        return EM_RES.ERR;
+                    }
+
+                }
+
+                res = roll_star.SetOff();
+                if (res != EM_RES.OK) return res;
+                res = VacumRoll[ck_id].SetOn();
+                if (res != EM_RES.OK) return res;
+                if (!(ModSta[get_id].LSta == STA_MOD.UNTEST && ModSta[get_id].RSta == STA_MOD.UNTEST))
+                {
+                    res = VacumRoll[get_id].SetOff();
+                    if (res != EM_RES.OK) return res;
+                }
+                res = VacumRoll[op_id].SetOn();
+                if (res != EM_RES.OK) return res;
+                if (!(ModSta[bk_id].LSta == STA_MOD.UNTEST && ModSta[bk_id].RSta == STA_MOD.UNTEST))
+                {
+                    res = VacumRoll[bk_id].SetOff();
+                    if (res != EM_RES.OK) return res;
+                }
+                bRollOK = true;
+                return EM_RES.OK;
+            }
+            catch
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "位置错误", disc, GetStaString));
+                return EM_RES.ERR;
+            }
+            finally
+            {
+                roll_star.SetOff();
+
+            }
+        }
 
         public enum EM_STA
         {
@@ -4147,7 +4356,9 @@ namespace UI
             [Description("点亮中")]
             POINT,
             [Description("错误")]
-            ERR
+            ERR,
+           [Description("退出")]
+            QUIET
         }      
         public static bool isErr;
         public static bool isReady
@@ -4191,7 +4402,7 @@ namespace UI
             for (int i = 0; i < 12; i++)
             {
                 if (!isReady) return EM_RES.QUIT;
-                res = mact_roll(ref VAR.gsys_set.bquit);
+                res = mact_roll(ref bquit);
                 if (res != EM_RES.OK) return res;
                 Thread.Sleep(10);
                 Application.DoEvents();
@@ -4209,134 +4420,86 @@ namespace UI
         public static EM_RES Home(ref bool bquit)
         {
             EM_RES ret = EM_RES.OK;
-            ret = mHome( ref VAR.gsys_set.bquit);
+            ret = mHome( ref bquit);
             return ret;
-        }  
-        public static void act_roll()
+        }
+        public static void act_run()
         {
             try
-            { 
-
-            EM_RES ret = EM_RES.OK;
-            status = EM_STA.ROLL;
-      
-            if (!bRollOK)
             {
-                ret = mact_roll(ref VAR.gsys_set.bquit);
-                if (ret != EM_RES.OK) goto MEND;
-            }
-            else
-            if (!bOtherOK)
-            {
-                if (sen_closed.isON)
+                if (VAR.gsys_set.bquit) return;
+                EM_RES ret = EM_RES.OK;
+                ret = WSRun(ref VAR.gsys_set.bquit);
+                if (ret == EM_RES.OK)
                 {
-                    ret = mopen(ref VAR.gsys_set.bquit);
-                    if (ret != EM_RES.OK) goto MEND;
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, disc + "完成");
                 }
-                if (sen_open.isOFF)
+                else
+                if (VAR.gsys_set.bquit == false && ret == EM_RES.ERR)
                 {
-                    ret = mclose(ref VAR.gsys_set.bquit);
-                    if (ret != EM_RES.OK) goto MEND;
-                }
-                if (ModSta[ck_id].LSta == STA_MOD.UNTEST || ModSta[ck_id].RSta == STA_MOD.UNTEST)
-                {
-                    ret = mPoint(ref VAR.gsys_set.bquit);
-                    if (ret != EM_RES.OK) goto MEND;
-                }
-            }
-        MEND:
-                if (!VAR.gsys_set.bquit)
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "运行失败", disc, GetStaString));
-                    VAR.gsys_set.bquit = true;
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常!");
+                    for (int n = 0; n < 30; n++)
+                    {
+                        VAR.gsys_set.bquit = true;
+                        Thread.Sleep(10);
+                        Application.DoEvents();
+                    }
                     status = EM_STA.ERR;
-                    Action.stop();
                 }
-             
-                
-                
+
+            }
+            catch (Exception e)
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + GetStaString + "异常" + e.ToString());
+                VAR.gsys_set.bquit = true;
+                return;
+            }
+
+        }
+        public static EM_RES WSRun(ref bool bquit)
+        {
+            try
+            {
+
+                EM_RES ret = EM_RES.OK;
+                status = EM_STA.ROLL;
+                if (!bRollOK)
+                {
+                    ret = mact_roll(ref bquit);
+                    if (ret != EM_RES.OK) return ret;
+                }
+                else
+                if (!bOtherOK)
+                {
+                    if (sen_closed.isON)
+                    {
+                        ret = mopen(ref bquit);
+                        if (ret != EM_RES.OK) return ret;
+                    }
+                    if (sen_open.isOFF)
+                    {
+                        ret = mclose(ref bquit);
+                        if (ret != EM_RES.OK) return ret;
+                    }
+                    if (ModSta[ck_id].LSta == STA_MOD.UNTEST || ModSta[ck_id].RSta == STA_MOD.UNTEST)
+                    {
+                        ret = mPoint(ref bquit);
+                        if (ret != EM_RES.OK) return ret;
+                    }
+
+                    return EM_RES.ERR;
+
+                }
+                return EM_RES.ERR;
             }
             catch (Exception ee)
             {
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "运行失败", disc, ee.ToString()));
-                Action.stop();
-                status = EM_STA.ERR;
-            }
-
-        }
-        public static EM_RES mact_roll(ref bool bquit)
-        {
-            EM_RES res = EM_RES.OK;
-            try
-            {
-                status = EM_STA.ROLL;
-                int i, j;
-                if (!isReady) return EM_RES.QUIT;              
-                res = roll_star.SetOff();
-                if (res != EM_RES.OK) return res;
-                res = ck_roll_safe(0);
-                if (res != EM_RES.OK) return res;
-                res = cyl_ck_up.SetOff(ref bquit, 3000);
-                if (res != EM_RES.OK) return res;
-                res = roll_star.SetOn();
-                if (res != EM_RES.OK) return res;
-                i = 0; j = 0;
-                while (roll_topos.isOFF && isReady)
-                {
-                    Thread.Sleep(5);
-                    Application.DoEvents();
-                    i++;
-                    if (i > 1000)
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "转盘运动等待出位超时", disc, GetStaString));
-                        return EM_RES.ERR;
-                    }
-
-                }
-                while (roll_topos.isON && isReady)
-                {
-
-                    Thread.Sleep(5);
-                    Application.DoEvents();
-                    j++;
-                    if (j > 1000)
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "转盘运动等待到位超时", disc, GetStaString));
-                        return EM_RES.ERR;
-                    }
-
-                }
-
-                res = roll_star.SetOff();
-                if (res != EM_RES.OK) return res; 
-                res = VacumRoll[ck_id].SetOn();
-                if (res != EM_RES.OK) return res;
-                if (!(ModSta[get_id].LSta == STA_MOD.UNTEST && ModSta[get_id].RSta == STA_MOD.UNTEST))
-                {
-                    res = VacumRoll[get_id].SetOff();
-                    if (res != EM_RES.OK) return res;
-                }
-                res = VacumRoll[op_id].SetOn();
-                if (res != EM_RES.OK) return res;
-                if (!(ModSta[bk_id].LSta == STA_MOD.UNTEST && ModSta[bk_id].RSta == STA_MOD.UNTEST))
-                {
-                    res = VacumRoll[bk_id].SetOff();
-                    if (res != EM_RES.OK) return res;
-                }               
-                bRollOK = true;
-                return EM_RES.OK;
-            }
-            catch
-            {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}--{1}--" + "位置错误", disc, GetStaString));
                 return EM_RES.ERR;
             }
-            finally
-            {
-                roll_star.SetOff();
 
-            }
         }
+        
         public static Task TaskRoll;
         public static void task_star()
         {
@@ -4345,7 +4508,7 @@ namespace UI
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, "创建转盘运动线程");
                 if (TaskRoll != null)
                     TaskRoll.Dispose();
-                TaskRoll = new Task(act_roll);
+                TaskRoll = new Task(act_run);
                 TaskRoll.Start();
             }
         }
@@ -4573,6 +4736,7 @@ namespace UI
         //}
     }
     #endregion
+    #endregion
     #region 基本动作
     public static class Action
     {
@@ -4590,27 +4754,38 @@ namespace UI
         /// 空料运行
         /// </summary>
        public static bool bNullRun;
-        public static EM_RES DoAct(Mact Act, string msg)  //执行委托
+        public static EM_RES DoAct(Mact Act)  //执行委托
         {
             EM_RES ret;
             try
             {
-                if (VAR.gsys_set.bquit) return EM_RES.QUIT;            
+                if (VAR.gsys_set.bquit) return EM_RES.QUIT;
                 ret = Act(ref VAR.gsys_set.bquit);
-                if (ret == EM_RES.ERR && VAR.gsys_set.bquit==false)
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, msg+"异常!");
-                    VAR.gsys_set.bquit = true;
-                }
                 if (ret == EM_RES.OK)
                 {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, msg+"成功");
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS,   "成功");
+                   
+                    return ret;
                 }
-                return ret;
+                //不成功的话检测退出变量
+                if (VAR.gsys_set.bquit == false)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, "异常!");
+                    for (int n = 0; n < 30; n++)
+                    {
+                        VAR.gsys_set.bquit = true;
+                        Thread.Sleep(10);
+                        Application.DoEvents();
+                    }
+                    
+                    return EM_RES.ERR;
+                }
+               
+                return EM_RES.QUIT;
             }
             catch (Exception e)
             {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, msg+"异常"+ e.ToString());
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, "异常" + e.ToString());
                 VAR.gsys_set.bquit = true;
                 return EM_RES.ERR;
             }
@@ -4998,21 +5173,22 @@ namespace UI
 
         #endregion
         #region 保存读取
-        public static EM_RES LoadCfg()
-        {
-            //产品参数
-            string filename = string.Format("{0}\\syscfg\\syscfg.ini", Path.GetFullPath(".."));
-            if (!File.Exists(filename))
-            {
-                File.Create(filename);
-                //VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}初始化对应产品名{1}配置文件不存在!", disc, productname));
-                //return EM_RES.PARA_ERR;
-            }
-            IniFile inf = new IniFile(filename);
-            string section = string.Format("RUNcfg");
-           // row = inf.ReadInteger(section, "TARY_ROW", 1);
-            return EM_RES.OK;
-        }
+        //public static EM_RES LoadCfg(string filePath, string Section, string Ident, string Default)
+        //{
+        //    //产品参数
+        //    if(filePath.Length<3)
+        //        filePath = string.Format("{0}\\syscfg\\syscfg.ini", Path.GetFullPath(".."));
+        //    else
+        //        filePath = string.Format("{0}+filePath", Path.GetFullPath(".."));
+        //    if (!File.Exists(filePath))
+        //    {
+        //        File.Create(filePath);
+        //    }
+        //    IniFile inf = new IniFile(filePath);
+        //    string section = string.Format("RUNcfg");
+        //  //   inf.ReadString(section, Ident, 1);
+        //    return EM_RES.OK;
+        //}
 
         public static EM_RES SavCfg()
         {

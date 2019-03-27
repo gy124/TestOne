@@ -209,7 +209,10 @@ namespace UI
         }
         private void FrMain_Load(object sender, EventArgs e)
         {
-            EM_RES ret;        
+           
+            EM_RES ret;
+
+
             VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, "系统启动...");                    
             VAR.gsys_set.UpdatePro += new Update_product(UI.Action.Update_pro);//运行数据加载初始化
             VAR.gsys_set.LoadSysCfg();//加载产品同时执行委托初始化

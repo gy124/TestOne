@@ -370,7 +370,7 @@ namespace MotionCtrl
 
                 if(MsgType == EM_MSGTYPE.ERR)
                 {
-                    VAR.gsys_set.bquit = true;
+                   // VAR.gsys_set.bquit = true;
                 }
 
 

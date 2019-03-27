@@ -295,7 +295,7 @@ namespace UI
                     Enablebtn(sender, false);
 
                     EM_RES res = EM_RES.OK;
-                     res = COM.Home();
+                     res = COM.Home(ref VAR.gsys_set.bquit);
                     ShowMessage(string.Format("【{0}】 复位 {1}", "系统", res == EM_RES.OK ? "成功" : "失败"), "提示", MessageBoxButtons.OK);
                     if (res == EM_RES.OK)
                         VAR.gsys_set.status = EM_SYS_STA.STANDBY;
