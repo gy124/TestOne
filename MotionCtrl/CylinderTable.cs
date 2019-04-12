@@ -17,7 +17,6 @@ namespace MotionCtrl
         List<Cylinder> list_cld=new List<Cylinder> ();
         Color cl_out_on = Color.Lime;
         Color cl_in_on = Color.Orange;
-        bool bquit = false;
         public CylinderTable()
         {
             InitializeComponent();
@@ -34,9 +33,9 @@ namespace MotionCtrl
             else if (row < 0) row = dgv.Rows.Count - 1;
 
             dgv.Rows[row].Cells[0].Value = cld.io_out.str_disc;
-            dgv.Rows[row].Cells[1].Value = cld.isON?"ON":"OFF";
-            dgv.Rows[row].Cells[2].Value = cld.io_sen_on == null? "":(cld.io_sen_on.Status == cld.io_sen_on_active?"ON":"OFF");
-            dgv.Rows[row].Cells[3].Value = cld.io_sen_off == null ? "" : (cld.io_sen_off.Status == cld.io_sen_off_active ? "ON" : "OFF");
+            dgv.Rows[row].Cells[1].Value = cld._isON?"ON":"OFF";
+            dgv.Rows[row].Cells[2].Value = cld.io_sen_on == null? "":(cld.io_sen_on._Status == cld.io_sen_on_active?"ON":"OFF");
+            dgv.Rows[row].Cells[3].Value = cld.io_sen_off == null ? "" : (cld.io_sen_off._Status == cld.io_sen_off_active ? "ON" : "OFF");
         }
 
         public void AddCylinder(Cylinder cld)
@@ -113,7 +112,6 @@ namespace MotionCtrl
         private void dgv_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             EM_RES ret;
-           
             if (e.RowIndex < 0 || e.RowIndex > list_cld.Count) return;
             if (list_cld.ElementAt(e.RowIndex).io_out.str_disc != dgv.Rows[e.RowIndex].Cells[0].Value.ToString())
             {
@@ -137,6 +135,12 @@ namespace MotionCtrl
 
         private void dgv_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
+            if (e.RowIndex < 0) return;
+            if ((e.RowIndex & 1) == 1)
+            {
+                e.CellStyle.BackColor = Color.WhiteSmoke;
+            }
+
             if (e.ColumnIndex == 1)
             {
                 if (e.Value.ToString() == "ON") e.CellStyle.BackColor = cl_out_on;

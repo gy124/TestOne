@@ -56,13 +56,13 @@ namespace MotionCtrl
             this.layer_offset_z = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.layer_offset_a = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dgv = new System.Windows.Forms.DataGridView();
-            this.tmr_update = new System.Windows.Forms.Timer(this.components);
             this.disc = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.status = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.id = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.maincard_id = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btn_open = new System.Windows.Forms.DataGridViewButtonColumn();
             this.btn_close = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.tmr_update = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.dgv)).BeginInit();
             this.SuspendLayout();
             // 
@@ -229,18 +229,13 @@ namespace MotionCtrl
             this.dgv.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_CellContentClick);
             this.dgv.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.dgv_CellPainting);
             // 
-            // tmr_update
-            // 
-            this.tmr_update.Interval = 300;
-            this.tmr_update.Tick += new System.EventHandler(this.tmr_update_Tick);
-            // 
             // disc
             // 
             this.disc.HeaderText = "气缸模组";
             this.disc.Name = "disc";
             this.disc.ReadOnly = true;
             this.disc.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.disc.Width = 150;
+            this.disc.Width = 250;
             // 
             // status
             // 
@@ -256,7 +251,7 @@ namespace MotionCtrl
             // id
             // 
             this.id.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.id.HeaderText = "感开";
+            this.id.HeaderText = "传感器(打开)";
             this.id.Name = "id";
             this.id.ReadOnly = true;
             this.id.Resizable = System.Windows.Forms.DataGridViewTriState.False;
@@ -264,7 +259,7 @@ namespace MotionCtrl
             // maincard_id
             // 
             this.maincard_id.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.maincard_id.HeaderText = "感关";
+            this.maincard_id.HeaderText = "传感器(关闭)";
             this.maincard_id.Name = "maincard_id";
             this.maincard_id.ReadOnly = true;
             this.maincard_id.Resizable = System.Windows.Forms.DataGridViewTriState.False;
@@ -285,7 +280,7 @@ namespace MotionCtrl
             this.btn_open.Name = "btn_open";
             this.btn_open.ReadOnly = true;
             this.btn_open.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.btn_open.Text = "开";
+            this.btn_open.Text = "打开";
             this.btn_open.UseColumnTextForButtonValue = true;
             // 
             // btn_close
@@ -304,8 +299,13 @@ namespace MotionCtrl
             this.btn_close.Name = "btn_close";
             this.btn_close.ReadOnly = true;
             this.btn_close.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.btn_close.Text = "关";
+            this.btn_close.Text = "关闭";
             this.btn_close.UseColumnTextForButtonValue = true;
+            // 
+            // tmr_update
+            // 
+            this.tmr_update.Interval = 300;
+            this.tmr_update.Tick += new System.EventHandler(this.tmr_update_Tick);
             // 
             // CylinderTable
             // 

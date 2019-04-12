@@ -55,7 +55,6 @@ namespace MotionCtrl
             this.layer_offset_z = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.layer_offset_a = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dgv = new System.Windows.Forms.DataGridView();
-            this.tmr_update = new System.Windows.Forms.Timer(this.components);
             this.disc = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.status = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dir = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -63,6 +62,7 @@ namespace MotionCtrl
             this.num = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btn_open = new System.Windows.Forms.DataGridViewButtonColumn();
             this.btn_close = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.tmr_update = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.dgv)).BeginInit();
             this.SuspendLayout();
             // 
@@ -232,18 +232,13 @@ namespace MotionCtrl
             this.dgv.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_CellContentClick);
             this.dgv.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.dgv_CellPainting);
             // 
-            // tmr_update
-            // 
-            this.tmr_update.Interval = 300;
-            this.tmr_update.Tick += new System.EventHandler(this.tmr_update_Tick);
-            // 
             // disc
             // 
             this.disc.HeaderText = "IO";
             this.disc.Name = "disc";
             this.disc.ReadOnly = true;
             this.disc.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.disc.Width = 150;
+            this.disc.Width = 250;
             // 
             // status
             // 
@@ -251,7 +246,6 @@ namespace MotionCtrl
             this.status.Name = "status";
             this.status.ReadOnly = true;
             this.status.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.status.Width = 80;
             // 
             // dir
             // 
@@ -259,7 +253,6 @@ namespace MotionCtrl
             this.dir.Name = "dir";
             this.dir.ReadOnly = true;
             this.dir.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.dir.Width = 70;
             // 
             // card
             // 
@@ -267,6 +260,7 @@ namespace MotionCtrl
             this.card.Name = "card";
             this.card.ReadOnly = true;
             this.card.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.card.Width = 200;
             // 
             // num
             // 
@@ -274,7 +268,7 @@ namespace MotionCtrl
             this.num.Name = "num";
             this.num.ReadOnly = true;
             this.num.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.num.Width = 50;
+            this.num.Width = 80;
             // 
             // btn_open
             // 
@@ -292,7 +286,7 @@ namespace MotionCtrl
             this.btn_open.Name = "btn_open";
             this.btn_open.ReadOnly = true;
             this.btn_open.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.btn_open.Text = "开";
+            this.btn_open.Text = "打开";
             this.btn_open.UseColumnTextForButtonValue = true;
             // 
             // btn_close
@@ -311,8 +305,13 @@ namespace MotionCtrl
             this.btn_close.Name = "btn_close";
             this.btn_close.ReadOnly = true;
             this.btn_close.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.btn_close.Text = "关";
+            this.btn_close.Text = "关闭";
             this.btn_close.UseColumnTextForButtonValue = true;
+            // 
+            // tmr_update
+            // 
+            this.tmr_update.Interval = 300;
+            this.tmr_update.Tick += new System.EventHandler(this.tmr_update_Tick);
             // 
             // IOTable
             // 

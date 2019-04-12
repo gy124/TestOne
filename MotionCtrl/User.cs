@@ -26,6 +26,8 @@ namespace MotionCtrl
             public String name;
             public String password;
             public PERMISSION pms;
+            public bool bUpdate;
+            
             public override string ToString()
             {
                 return string.Format("{0},{1},{2}", name, password, Enum.GetName(typeof(PERMISSION), pms));
@@ -44,7 +46,7 @@ namespace MotionCtrl
         }
 
         List<ST_USER> list_user = new List<ST_USER>();
-        ST_USER cur_user = new ST_USER();
+        public ST_USER cur_user = new ST_USER();
 
         public User()
         {
@@ -87,8 +89,10 @@ namespace MotionCtrl
             dgv.Rows[row].Cells[3].Value = str;
         }
 
+
         public void UpdateShow()
         {
+          
             for (int r = 0; r < list_user.Count; r++)
             {
                 if(r >= dgv.Rows.Count) FillTable(list_user.ElementAt(r), -2);
@@ -106,7 +110,7 @@ namespace MotionCtrl
             //load data
             if (Width == max_w)
             {
-                LoadFromFile();
+                LoadFromFile();                    
             }
         }
         public bool LoadFromFile(string filename = "\\syscfg\\user.bin")
@@ -149,7 +153,31 @@ namespace MotionCtrl
 
             if (list_temp.Count == 0) return false;
             list_user = list_temp;
-
+            string cb_user_text=cb_user.Text;
+            cb_user_text = cb_user.Text;
+            cb_user.Items.Clear();
+            foreach (ST_USER user_temp in list_user)
+            {
+                cb_user.Items.Add(user_temp.name);
+                if (cb_user_text ==user_temp.name)
+                {
+                    cb_user.Text = cb_user_text;
+                }
+            }
+            if (cur_user.name == "超级管理员" && cur_user.pms == PERMISSION.SuperAdmin)
+            {
+                btn_add.Visible = true;
+                btn_dele.Visible = true;
+                btn_add.Enabled = true;
+                btn_dele.Enabled = true;
+            }
+            else
+            {
+                btn_add.Visible = false;
+                btn_dele.Visible = false;
+                btn_add.Enabled = false;
+                btn_dele.Enabled = false;
+            }
             UpdateShow();
             return true;
         }
@@ -158,7 +186,42 @@ namespace MotionCtrl
             filename = Path.GetFullPath("..") + filename;
             List<ST_USER> list_temp = new List<ST_USER>();
             list_temp.Clear();
-            foreach (DataGridViewRow row in dgv.Rows)
+            //检查表格内是否有重复用户名
+             foreach (DataGridViewRow v in dgv.Rows)
+                {
+                    if (v.Cells[1].Value != null)
+                    {
+                        var count = 0;
+                        foreach (DataGridViewRow v2 in dgv.Rows)
+                        {
+                            if (v2.Cells[1].Value != null)
+                            {
+                                if (v.Cells[1].Value.ToString().Equals(v2.Cells[1].Value.ToString()))
+                                    count++;
+                            }
+                        }
+                        if (count > 1)
+                        {
+                            MessageBox.Show("用户名有重复，重复的内容是:【" + v.Cells[1].Value + "】!");
+                            return false; 
+                        }
+                    }
+                }
+    
+            //检查表格是否有两个超级管理员
+            foreach (DataGridViewRow v in dgv.Rows)
+            {
+                if (v.Cells[3].Value.ToString().Equals("超级管理员"))
+                {
+                    if (v.Index!=0)
+                    {
+                        MessageBox.Show("第一个用户为超级管理员,其它超级管理员降级为管理员!");
+                        v.Cells[3].Value = "管理员";
+                    }
+                }
+            }
+
+             foreach (DataGridViewRow row in dgv.Rows)
             {
                 if (row.Cells[1].Value.ToString().Length < 3 || row.Cells[2].Value.ToString().Length < 3) continue;
                 ST_USER user = new ST_USER();
@@ -200,34 +263,57 @@ namespace MotionCtrl
         }
         private void dgv_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
-            if(e.ColumnIndex == 2)
+            if (e.RowIndex >= list_user.Count) return;
+          if(list_user[e.RowIndex].pms>cur_user.pms|| (list_user[e.RowIndex].pms==cur_user.pms && list_user[e.RowIndex].name!= cur_user.name))
             {
-                if(e.Value !=null && e.Value.ToString().Length > 0)
+
+                if (e.ColumnIndex == 2)
                 {
-                    e.Value = new string('*', e.Value.ToString().Length);
+                    if (e.Value != null && e.Value.ToString().Length > 0)
+                    {
+                        e.Value = new string('*', e.Value.ToString().Length);
+
+                    }
                 }
             }
+            
         }
 
         private void btn_save_Click(object sender, EventArgs e)
         {
             SaveToFile();
+            LoadFromFile();
         }
 
         private void dgv_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex<0 || dgv.Rows[e.RowIndex].Cells[1].Value == null) return;
-            if (dgv.Rows[e.RowIndex].Cells[1].Value.ToString() == cur_user.name || cur_user.pms == PERMISSION.SuperAdmin)
-            {
-                dgv.Rows[e.RowIndex].Cells[1].ReadOnly = true;
-                dgv.Rows[e.RowIndex].Cells[2].ReadOnly = true;
-                dgv.Rows[e.RowIndex].Cells[3].ReadOnly = true;
-            }
-            else
+            if (e.RowIndex < 0) return;
+            if (dgv.Rows[e.RowIndex].Cells[1].Value == null) return;
+            if (list_user.Count <= e.RowIndex)
             {
                 dgv.Rows[e.RowIndex].Cells[1].ReadOnly = false;
                 dgv.Rows[e.RowIndex].Cells[2].ReadOnly = false;
                 dgv.Rows[e.RowIndex].Cells[3].ReadOnly = false;
+                return;
+            }
+            if (dgv.Rows[e.RowIndex].Cells[1].Value.ToString() == cur_user.name || list_user[e.RowIndex].pms <cur_user.pms)
+            {
+                if(list_user[e.RowIndex].name == "超级管理员")
+                {
+                    dgv.Rows[e.RowIndex].Cells[1].ReadOnly = true;
+                }               
+                else
+                {
+                    dgv.Rows[e.RowIndex].Cells[1].ReadOnly = false;
+                }                
+                dgv.Rows[e.RowIndex].Cells[2].ReadOnly = false; 
+                dgv.Rows[e.RowIndex].Cells[3].ReadOnly = true;              
+            }
+            else
+            {
+                dgv.Rows[e.RowIndex].Cells[1].ReadOnly = true;
+                dgv.Rows[e.RowIndex].Cells[2].ReadOnly = true;
+                dgv.Rows[e.RowIndex].Cells[3].ReadOnly = true;
             }
         }
 
@@ -235,6 +321,105 @@ namespace MotionCtrl
         {
             Width = pnl_log.Width + pnl_log.Margin.Left * 2;
             LoadFromFile();
+            
+            lb_log_inf.Text = string.Empty;
+            lb_grade_inf.Text = string.Empty;
+            for (int i = 0; i < dgv.ColumnCount; i++)
+            {
+                dgv.Columns[i].SortMode= DataGridViewColumnSortMode.NotSortable;
+
+            }
+
+
+        }
+
+        private void btn_add_Click(object sender, EventArgs e)
+        {
+            int index=dgv.Rows.Add();
+            dgv.Rows[index].Cells[0].Value = (index + 1).ToString();
+            dgv.Rows[index].Cells[1].Value = "XXX";
+            dgv.Rows[index].Cells[2].Value = "1234";
+            dgv.Rows[index].Cells[3].Value = "作业员";
+           
+
+        }
+
+        private void btn_login_Click(object sender, EventArgs e)
+        {
+         
+            string str=string.Empty;
+            foreach (ST_USER user_temp in list_user)
+            {
+                if (tb_pw.Text==user_temp.password && cb_user.Text==user_temp.name)
+                {
+                    cur_user = user_temp;
+                    switch (cur_user.pms)
+                    {
+                        case PERMISSION.SuperAdmin:
+                            str = "超级管理员";
+                            break;
+                        case PERMISSION.Admin:
+                            str = "管理员";
+                            break;
+                        case PERMISSION.Engineer:
+                            str = "工程师";
+                            break;
+                        case PERMISSION.Operator:
+                            str = "作业员";
+                            break;
+                        case PERMISSION.None:
+                            str = "无权限";
+                            break;
+                        default:
+                            str = "无权限";
+                            break;
+                    }
+                    cur_user.bUpdate = true;
+                    lb_log_inf.Text = cur_user.name+ "登陆成功" ;
+                    lb_grade_inf.Text = "用户级别为:" + str;
+                    //更新界面
+                    if (Width == pnl_log.Width + pnl_log.Margin.Left * 2 + pnl_manager.Width + pnl_manager.Margin.Left * 2)
+                    {
+                        Width = pnl_log.Width + pnl_log.Margin.Left * 2 ;
+                        Width = pnl_log.Width + pnl_log.Margin.Left * 2 + pnl_manager.Width + pnl_manager.Margin.Left * 2;
+                    }
+                    LoadFromFile();
+                    return;
+                }
+            }
+            Width = pnl_log.Width + pnl_log.Margin.Left * 2;
+            lb_log_inf.Text = cb_user.Text+ "登陆失败，密码错误!";
+            lb_grade_inf.Text = String.Empty;
+           
+        }
+
+        private void btn_dele_Click(object sender, EventArgs e)
+        {
+             if(dgv.CurrentRow.Cells[1].Value.ToString()=="超级管理员" && dgv.CurrentRow.Cells[3].Value.ToString()== "超级管理员")
+             {               
+                MessageBox.Show("超级管理员不能删除!");
+                return;
+            }
+            if(dgv.CurrentRow.Cells[1].Value.ToString()==cur_user.name)
+            {
+                
+                MessageBox.Show("当前用户不能删除!");
+                return;
+            }
+            dgv.Rows.RemoveAt(dgv.CurrentRow.Index);
+        }
+
+        private void btn_logout_Click(object sender, EventArgs e)
+        {
+            cur_user.bUpdate = true;
+            cur_user.name = "作业员";
+            cur_user.pms = PERMISSION.None;
+            Width = pnl_log.Width + pnl_log.Margin.Left * 2;
+            cb_user.Text = string.Empty;
+            tb_pw.Text = string.Empty;
+            lb_log_inf.Text ="当前用户已注销!";
+            lb_grade_inf.Text = string.Empty;
+
         }
     }
 }

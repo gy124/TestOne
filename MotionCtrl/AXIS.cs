@@ -11,7 +11,7 @@ using System.ComponentModel;
 
 namespace MotionCtrl
 {
-    public delegate EM_RES CHK_AXIS_SAFE(int id, double target_pos = double.MaxValue);
+    public delegate EM_RES CHK_AXIS_SAFE(int id,double target_pos = double.MaxValue);
     /// <summary>
     /// AXIS类，统一轴的API
     /// 创建：李大源 @2018/08/02
@@ -21,7 +21,7 @@ namespace MotionCtrl
         /// <summary>
         /// 对应板卡
         /// </summary>
-        CARD card;
+        public CARD card;
 
         public enum AX_DIR { N = 0, P = 1, CCW = 0, CW = 1 }
         public enum MT_TYPE { STEP, SEVER, VIRTUAL, NULL }
@@ -38,100 +38,48 @@ namespace MotionCtrl
             ERROR
         }
         /// <summary>
-        /// 限位使用类型
+        /// 
         /// </summary>
-        public enum EL_EN
-        {
-            [Description("不用限位")]
-            DIS,
-            [Description("正负限位")]
-            NP,
-            [Description("只用负限位")]
-            N,
-            [Description("只用正限位")]
-            P
-        }
-        public enum EL_LOGIC
-        {
-            [Description("正负限位低电平有效")]
-            NP_L,
-            [Description("正负限位高电平有效")]
-            NP_H,
-            [Description("正低负高电平有效")]
-            NH_PL,
-            [Description("正高负低电平有效")]
-            NL_PH
-        }
-
-        public enum EL_STOP
-        {
-            [Description("正负限位处急停")]
-            NP_EMG,
-            [Description("正负限位减速停止")]
-            NP_DEC,
-            [Description("负限位减速停止")]
-            N_DEC,
-            [Description("正限位减速停止")]
-            P_DEC
-        }
+        public enum EL_EN { DIS, NP, N, P }
+        public enum EL_LOGIC { NP_L, NP_H, NH_PL, NL_PH }
+        public enum EL_STOP { NP_EMG, NP_DEC, N_DEC, P_DEC }
         [Flags]
         public enum MTIO : uint
         {
-            [Description("报警")]
             ALM = (1 << 0),
-            [Description("正限位")]
             LMTP = (1 << 1),
-            [Description("负限位")]
             LMTN = (1 << 2),
-            [Description("急停")]
             EMG = (1 << 3),
-            [Description("原点")]
             ORG = (1 << 4),
-            [Description("软件正限位")]
             SLMTP = (1 << 6),
-            [Description("软件负限位")]
             SLMTN = (1 << 7),
-            [Description("实际到位")]
             INP = (1 << 8),
-            [Description("相位")]
             EZ = (1 << 9),
-            [Description("命令脉冲到位")]
             RDY = (1 << 10),
-            [Description("伺服使能")]
             SVON = (1 << 11),
-            [Description("回零中")]
             HOMEING = (1 << 12)
         }
 
         public enum AX_STA
         {
-            [Description("命令脉冲到位")]
             READY,
-            [Description("点到点运动中")]
             PTP,
-            [Description("报警")]
             ALM,
-            [Description("软件正限位")]
             ELP,
-            [Description("软件负限位")]
             ELN,
-
             SLP,
             SLN,
-            [Description("急停")]
             EMG,
-            [Description("伺服未使能")]
             DIS,
-
             NRDY,
             HOMEING,
+            DISCONNECT,
             UNKOWN
         }
 
 
         public int m_id;
-
-        public int num;//从零开始轴号
+        public int num;
         public string str_disc;
         public EM_RES res;
         public int useby = -1;  //使用id索引
@@ -174,7 +122,6 @@ namespace MotionCtrl
         public double sln;
         public double slp;
         public int enc_k = 1;
-
         public int cmd_k = 1;
 
         private bool bkey = false;
@@ -199,6 +146,9 @@ namespace MotionCtrl
         //需要保养里程
         public double dis_max;
 
+        public double pos0;
+        public double pos1;
+
         public CHK_AXIS_SAFE ChkSafePos;
         public CHK_AXIS_SAFE ChkSafeSen;
 
@@ -206,18 +156,12 @@ namespace MotionCtrl
 
         bool bShowErrMsg = true;
         public bool bInit = false;
-        /// <summary>
-        /// 固高32位轴状态
-        /// </summary>
-        int GT_pSts;
-        /// <summary>
-        /// 读取控制器时钟标志
-        /// </summary>
-        uint GT_axis_time = 0;
 
+#if ORIENTALMOTOR
+        public AZD.Motor AzdMotor = null;
+#endif
 
-
-        #region 构造、初始化
+        #region 初始化
         public AXIS()
         {
             num = -1;
@@ -257,7 +201,6 @@ namespace MotionCtrl
             {
                 pul_per_mm = 0;
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} io_num {1} 超范围[{2},{3})", disc, num, 0, card.ax_num));
-
             }
 
             //load config
@@ -265,13 +208,17 @@ namespace MotionCtrl
             if (res != EM_RES.OK)
             {
                 pul_per_mm = 0;
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} 加载参数异常！", disc));
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} 设置参数异常！", disc));
             }
 
             //set to home speed
             if (card.isReady) SetToHomeSpd();
 
             card.AxList.Add(this);
+
+#if ORIENTALMOTOR
+            AzdMotor = new AZD.Motor((byte)ax_id);
+#endif
         }
         public bool isInit
         {
@@ -296,7 +243,6 @@ namespace MotionCtrl
         #region 加载/保存参数
         public EM_RES LoadCfgFrInf(string filename = "")
         {
-
             if (filename.Length < 3) filename = Path.GetFullPath("..") + "\\syscfg\\axiscfg.ini";
             IniFile inf = new IniFile(filename);
 
@@ -313,6 +259,7 @@ namespace MotionCtrl
 
 
             logic_svr_on = (GPIO.IO_STA)inf.ReadInteger(Section, "LOGIC_SVR_ON", (int)logic_svr_on);
+
             home_dir = (AX_DIR)inf.ReadInteger(Section, "HOME_DIR", (int)home_dir);
             home_mode = (ushort)inf.ReadInteger(Section, "HOME_MODE", home_mode);
             home_offset = inf.ReadDouble(Section, "HOME_OFFSET", 0);
@@ -331,11 +278,13 @@ namespace MotionCtrl
             tacc = inf.ReadDouble(Section, "TACC", 0);
             tdec = inf.ReadDouble(Section, "TDEC", 0);
             ts = inf.ReadDouble(Section, "TS", 0);
+
             if (slp == 0 && sln == 0)
             {
                 slp = 100000;
                 sln = -slp;
             }
+
             max_acc = inf.ReadDouble(Section, "MAX_ACC", 15000);
             max_spd = inf.ReadDouble(Section, "MAX_SPD", 1500);
 
@@ -350,6 +299,10 @@ namespace MotionCtrl
             org_active_h = inf.ReadBool(Section, "ORG_ACTIVE_H", false);
             alm_num = inf.ReadInteger(Section, "ALM", -1);
             alm_active_h = inf.ReadBool(Section, "ALM_ACTIVE_H", true);
+
+            pos0 = inf.ReadDouble(Section, "POS0", 0);
+            pos1 = inf.ReadDouble(Section, "POS1", 0);
+
             return EM_RES.OK;
         }
         public EM_RES SaveCfgToInf(string filename = "")
@@ -396,6 +349,9 @@ namespace MotionCtrl
             inf.WriteBool(Section, "ORG_ACTIVE_H", org_active_h);
             inf.WriteInteger(Section, "ALM", alm_num);
             inf.WriteBool(Section, "ALM_ACTIVE_H", alm_active_h);
+
+            inf.WriteDouble(Section, "POS0", pos0);
+            inf.WriteDouble(Section, "POS1", pos1);
 
             return EM_RES.OK;
         }
@@ -501,16 +457,6 @@ namespace MotionCtrl
                 return EM_RES.OK;
             }
 #endif
-#if GOOGOLTECH
-            if (card.brand == CARD.BRAND.GOOGOLTECH)
-            {
-                //check card
-                if (card == null || card.isReady == false) return EM_RES.ERR;
-
-                bInit = true;
-                return EM_RES.OK;
-            }
-#endif
 #if ZMOTION
             if (card.brand == CARD.BRAND.ZMOTION)
             {
@@ -597,6 +543,13 @@ namespace MotionCtrl
                 bInit = true;
             }
 #endif
+#if ORIENTALMOTOR
+            if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+            {
+                if(AzdMotor!=null)
+                    AzdMotor.ErrorCount = 0;
+            }
+#endif
             return EM_RES.OK;
         }
         #endregion
@@ -623,13 +576,21 @@ namespace MotionCtrl
             //pul_per_mm
             if (Math.Abs(pul_per_mm) < 0.1)
             {
-                if (bShowErrMsg)
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} 轴参数未初始化!", disc));
+                if (bShowErrMsg) VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} 轴参数未初始化!", disc));
                 bShowErrMsg = false;
                 res = EM_RES.PARA_ERR;
                 return res;
             }
-
+#if ORIENTALMOTOR
+            if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+            {
+                if (AzdMotor == null)
+                {
+                    res = EM_RES.PARA_ERR;
+                    return res;
+                }
+            }
+#endif
             bShowErrMsg = true;
             res = EM_RES.OK;
             return res;
@@ -690,49 +651,44 @@ namespace MotionCtrl
         #region 刷新状态缓存
         public EM_RES UpdateStatusBuff(bool bforceupdate = true)
         {
-#if ZMOTION
-            if (card.brand == CARD.BRAND.ZMOTION)
+#if ZMOTION                   
+            if (card.type == CARD.TYPE.MOTION)
             {
-                if (card.type == CARD.TYPE.MOTION)
-                {
-                    //check card
-                    if (card == null || !card.isReady) return EM_RES.ERR;
+                //check card
+                if (card == null || !card.isReady) return EM_RES.ERR;
 
-                    //check time
-                    if (!bforceupdate && Math.Abs(VAR.msg.sw.ElapsedMilliseconds - AxStaBuf.tickcnt) < 10)
-                        return EM_RES.OK;
-                    long t = VAR.msg.sw.ElapsedMilliseconds;
-                    List<int> list_temp = new List<int>();
-                    int ret = zmcaux.ZAux_Direct_GetAxSta(card.handle, num, ref list_temp);
-                    if (ret == 0 && list_temp.Count == 7)
-                    {
-                        AxStaBuf.mtio = list_temp.ElementAt(0);
-                        AxStaBuf.cmd = list_temp.ElementAt(1);
-                        AxStaBuf.enc = list_temp.ElementAt(2);
-                        card.CardIOBuf.input[0] = list_temp.ElementAt(3);
-                        card.CardIOBuf.output[0] = list_temp.ElementAt(4);
-                        card.CardIOBuf.input[1] = list_temp.ElementAt(5);
-                        card.CardIOBuf.output[1] = list_temp.ElementAt(6);
-                        card.CardIOBuf.tickcnt = VAR.msg.sw.ElapsedMilliseconds;
-                        AxStaBuf.tickcnt = VAR.msg.sw.ElapsedMilliseconds;
-                        //VAR.msg.AddMsg(Msg.EM_MSGTYPE.DBG, string.Format("{0} update,T{1}ms", disc, AxStaBuf.tickcnt - t));
-                    }
-                    else
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.DBG, string.Format("{0} update,Err:{1},Cnt:{2},T{3}ms", disc, ret, list_temp.Count, AxStaBuf.tickcnt - t));
-                        return EM_RES.ERR;
-                    }
+                //check time
+                if (!bforceupdate && Math.Abs(VAR.msg.sw.ElapsedMilliseconds - AxStaBuf.tickcnt) < 10)
                     return EM_RES.OK;
+
+
+                long t = VAR.msg.sw.ElapsedMilliseconds;
+                List<int> list_temp = new List<int>();
+                int ret = zmcaux.ZAux_Direct_GetAxSta(card.handle, num, ref list_temp);
+                if (ret == 0 && list_temp.Count == 7)
+                {
+                    AxStaBuf.mtio = list_temp.ElementAt(0);
+                    AxStaBuf.cmd = list_temp.ElementAt(1);
+                    AxStaBuf.enc = list_temp.ElementAt(2);
+                    card.CardIOBuf.input[0] = list_temp.ElementAt(3);
+                    card.CardIOBuf.output[0] = list_temp.ElementAt(4);
+                    card.CardIOBuf.input[1] = list_temp.ElementAt(5);
+                    card.CardIOBuf.output[1] = list_temp.ElementAt(6);
+                    card.CardIOBuf.tickcnt = VAR.msg.sw.ElapsedMilliseconds;
+                    AxStaBuf.tickcnt = VAR.msg.sw.ElapsedMilliseconds;
+                    //VAR.msg.AddMsg(Msg.EM_MSGTYPE.DBG, string.Format("{0} update,T{1}ms", disc, AxStaBuf.tickcnt - t));
                 }
-                return EM_RES.OK;
+                else
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.DBG, string.Format("{0} update,Err:{1},Cnt:{2},T{3}ms", disc, ret, list_temp.Count, AxStaBuf.tickcnt - t));
+                    return EM_RES.ERR;
+                }
             }
+#endif    
             return EM_RES.OK;
-#endif
         }
-
-
         #endregion
-        #region 当前速度设置
+        #region 当前速度
         public double spd_cur
         {
             get
@@ -778,37 +734,27 @@ namespace MotionCtrl
                     spd = temp;
                 }
 #endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
+#if ORIENTALMOTOR
+                if (card.brand == CARD.BRAND.ORIENTALMOTOR)
                 {
-                  
-                    double pValue;
-               
-                    err = mc.GT_GetVel((short)card.card_id, (short)(num + 1), out pValue);
-                    if (err != 0)
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 获取当前速度失败，Err：{1}", disc, err));
-                        res = EM_RES.ERR;
-                        return mspd_cur;
-                    }
-                    spd = pValue*1000;
+                    res = EM_RES.OK;
+                    return mspd_cur;
                 }
 #endif
-
                 mspd_cur = spd / pul_per_mm;
                 res = EM_RES.OK;
                 return mspd_cur;
             }
         }
         #endregion
-        #region 获取、修改当前位置位置
+        #region 命令位置
         public int cmd_pos
         {
             get
             {
                 //check
                 res = ChkParam();
-                if (res != EM_RES.OK) return m_cmd_pos;
+                if (res != EM_RES.OK) return m_cmd_pos = int.MaxValue;
 #if LEADSHINE
                 if (card.brand == CARD.BRAND.LEADSHINE)
                 {
@@ -830,21 +776,16 @@ namespace MotionCtrl
                     //m_cmd_pos = (int)temp;
 
                     res = UpdateStatusBuff(false);
-                    m_cmd_pos = AxStaBuf.cmd;
+                    if (res != EM_RES.OK) m_cmd_pos = int.MaxValue;
+                    else m_cmd_pos = AxStaBuf.cmd;
                 }
 #endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
+#if ORIENTALMOTOR
+                if (card.brand == CARD.BRAND.ORIENTALMOTOR)
                 {
-                    double m_pref_pos;
-                    uint m_test = 1;
-                    int mret = mc.GT_GetPrfPos((short)card.card_id, (short)(num + 1), out  m_pref_pos, 1, out m_test);
-                    //int mret = mc.GT_GetAxisEncPos((short)card.card_id, (short)(num + 1), out  m_pref_pos, 1, out m_test);
-                    if (mret == 0)
-                    {
-                        m_cmd_pos = (int)m_pref_pos;
-                        return m_cmd_pos;
-                    }
+                    AzdMotor.UpdateSatus();
+                    if (AzdMotor.ErrorCount > 3) m_cmd_pos = int.MaxValue;
+                    else m_cmd_pos = AzdMotor.status.enc_pos;
                 }
 #endif
                 return m_cmd_pos * cmd_k;
@@ -869,15 +810,10 @@ namespace MotionCtrl
                     err = zmcaux.ZAux_Direct_SetDpos(card.handle, num, value * cmd_k);
                 }
 #endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
+#if ORIENTALMOTOR
+                if (card.brand == CARD.BRAND.ORIENTALMOTOR)
                 {
-                    //err = mc.GT_ZeroPos((short)card.card_id, (short)(num+1), 1);
-                    err = mc.GT_SetPrfPos((short)card.card_id, (short)(num + 1), value * cmd_k);
-                    if (mt_type == MT_TYPE.SEVER)
-                    {
-                        err = mc.GT_SetEncPos((short)card.card_id, (short)(num + 1), value * cmd_k);
-                    }
+                    err = 0;
                 }
 #endif
                 if (err != 0)
@@ -890,11 +826,14 @@ namespace MotionCtrl
                 res = EM_RES.OK;
             }
         }
+
+        public double _fcmd_pos = 0;
         public double fcmd_pos
         {
             get
             {
-                return cmd_pos / pul_per_mm;
+                _fcmd_pos = cmd_pos / pul_per_mm;
+                return _fcmd_pos;
             }
             set
             {
@@ -909,7 +848,7 @@ namespace MotionCtrl
             {
                 //check
                 res = ChkParam();
-                if (res != EM_RES.OK) return m_enc_pos;
+                if (res != EM_RES.OK) return m_enc_pos = int.MaxValue;
                 if (encode == ENC_TYPE.YES)
                 {
 #if LEADSHINE
@@ -934,27 +873,16 @@ namespace MotionCtrl
                         //m_enc_pos = (int)temp;
 
                         res = UpdateStatusBuff(false);
-                        m_enc_pos = AxStaBuf.enc;
+                        if (res != EM_RES.OK) m_enc_pos = int.MaxValue;
+                        else m_enc_pos = AxStaBuf.enc;
                     }
-
 #endif
-#if GOOGOLTECH
-                    if (card.brand == CARD.BRAND.GOOGOLTECH)
+#if ORIENTALMOTOR
+                    if (card.brand == CARD.BRAND.ORIENTALMOTOR)
                     {
-                        //get enc pos
-                        double m_get_pos = 0;
-                        uint m_tset_time = 1;
-                        if (mt_type == MT_TYPE.SEVER)
-                        {
-                            int mret = mc.GT_GetAxisEncPos((short)card.card_id, (short)(num + 1), out m_get_pos, 1, out m_tset_time);
-                            if (mret == 0)
-                            {
-                                m_enc_pos = (int)m_get_pos;
-                            }
-                        }
-                        else
-
-                            m_enc_pos = cmd_pos;
+                        AzdMotor.UpdateSatus();
+                        if (AzdMotor.ErrorCount > 3) m_enc_pos = int.MaxValue;
+                        else m_enc_pos = AzdMotor.status.enc_pos;
                     }
 #endif
                 }
@@ -988,13 +916,10 @@ namespace MotionCtrl
                     err = zmcaux.ZAux_Direct_SetMpos(card.handle, num, value * enc_k);
                 }
 #endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
+#if ORIENTALMOTOR
+                if (card.brand == CARD.BRAND.ORIENTALMOTOR)
                 {
-
-                    err = mc.GT_SetEncPos((short)card.card_id, (short)(num + 1), value * enc_k);
-                    //err = mc.GT_ZeroPos((short)card.card_id, (short)(num + 1), 1);                   
-
+                    err = 0;
                 }
 #endif
                 if (err != 0)
@@ -1007,11 +932,13 @@ namespace MotionCtrl
                 m_enc_pos = value * enc_k;
             }
         }
+        public double _fenc_pos = 0;
         public double fenc_pos
         {
             get
             {
-                return enc_pos / pul_per_mm;
+                _fenc_pos = enc_pos / pul_per_mm;
+                return _fenc_pos;
             }
             set
             {
@@ -1035,12 +962,6 @@ namespace MotionCtrl
                 err = LTDMC.dmc_set_softlimit((ushort)card.card_id, (ushort)num, (ushort)(ben ? 1 : 0), 0, 0, (int)(sln * pul_per_mm), (int)(slp * pul_per_mm));
             }
 #endif
-#if GOOGOLTECH
-            if (card.brand == CARD.BRAND.GOOGOLTECH)
-            {
-                err = 0;//-gy-1201-不用软限位          
-            }
-#endif
 #if ZMOTION
             if (card.brand == CARD.BRAND.ZMOTION)
             {
@@ -1048,6 +969,12 @@ namespace MotionCtrl
                 err = zmcaux.ZAux_Direct_SetFsLimit(card.handle, num, (float)(ben ? slp * pul_per_mm : 100000 * pul_per_mm));
                 //set SELN
                 err += zmcaux.ZAux_Direct_SetRsLimit(card.handle, num, (float)(ben ? sln * pul_per_mm : -100000 * pul_per_mm));
+            }
+#endif
+#if ORIENTALMOTOR
+            if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+            {
+                err = 0;
             }
 #endif
             if (err != 0)
@@ -1104,10 +1031,6 @@ namespace MotionCtrl
 
             //set speed
             int err = 0;
-            if (ts > Tacc || ts > Tdec)
-                ts = Math.Min(Tacc, Tdec);
-            if (ts < 0) ts = 0;
-            if (ts > 0.25) ts = 0.25;
 #if LEADSHINE
             if (card.brand == CARD.BRAND.LEADSHINE)
             {
@@ -1120,31 +1043,19 @@ namespace MotionCtrl
                 }
             }
 #endif
-#if GOOGOLTECH
-            if (card.brand == CARD.BRAND.GOOGOLTECH)
-            {
-                mc.TTrapPrm m_axis_prm;
-                m_axis_prm.acc = Tacc;
-                m_axis_prm.dec = Tdec;
-                m_axis_prm.velStart = spd_start * pul_per_mm;
-                m_axis_prm.smoothTime = 25;
-                err = mc.GT_SetTrapPrm((short)card.card_id, (short)(num + 1), ref m_axis_prm);
-                err = mc.GT_SetVel((short)card.card_id, (short)(num + 1), spd_high * pul_per_mm/1000);
-                //err = mc.dmc_set_profile((ushort)card.card_id, (ushort)num, spd_start * pul_per_mm, spd_high * pul_per_mm, Tacc, Tdec, spd_stop * pul_per_mm);
-
-            }
-#endif
 #if ZMOTION
             if (card.brand == CARD.BRAND.ZMOTION)
             {
                 //set spd_start
-                err = zmcaux.ZAux_Direct_SetLspeed(card.handle, num, (float)(spd_high * pul_per_mm));
+                err = zmcaux.ZAux_Direct_SetLspeed(card.handle, num, (float)(spd_start * pul_per_mm));
                 //set speed
                 err += zmcaux.ZAux_Direct_SetSpeed(card.handle, num, (float)(spd_high * pul_per_mm));
+                //set creep
+                err += zmcaux.ZAux_Direct_SetCreep(card.handle, num, (float)(2 * pul_per_mm));
                 //set Acc
-                err += zmcaux.ZAux_Direct_SetAccel(card.handle, num, (float)(spd_high / Tacc));
+                err += zmcaux.ZAux_Direct_SetAccel(card.handle, num, (float)(spd_high * pul_per_mm / Tacc));
                 //set Dec
-                err += zmcaux.ZAux_Direct_SetDecel(card.handle, num, (float)(spd_high / Tdec));
+                err += zmcaux.ZAux_Direct_SetDecel(card.handle, num, (float)(spd_high * pul_per_mm / Tdec));
 
             }
 #endif
@@ -1157,8 +1068,9 @@ namespace MotionCtrl
             mspd_cur = spd_high;
 
             //S曲线
-
-
+            if (ts > Tacc || ts > Tdec) ts = Math.Min(Tacc, Tdec);
+            if (ts < 0) ts = 0;
+            if (ts > 0.25) ts = 0.25;
 
 #if LEADSHINE
             if (card.brand == CARD.BRAND.LEADSHINE)
@@ -1172,29 +1084,16 @@ namespace MotionCtrl
                 }
             }
 #endif
-#if GOOGOLTECH
-            if (card.brand == CARD.BRAND.GOOGOLTECH)
-            {
-
-                mc.TTrapPrm m_axis_prm;
-                m_axis_prm.acc = Tacc;
-                m_axis_prm.dec = Tdec;
-                m_axis_prm.velStart = spd_start * pul_per_mm;
-                m_axis_prm.smoothTime = 25;//平滑时间0-50
-                err = mc.GT_SetTrapPrm((short)card.card_id, (short)(num + 1), ref m_axis_prm);
-                err = mc.GT_SetVel((short)card.card_id, (short)(num + 1), spd_high * pul_per_mm/1000);
-                if (err != 0)
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} S曲线平滑加速设置失败", disc));
-                    res = EM_RES.BUSY;
-                    return res;
-                }
-            }
-#endif
 #if ZMOTION
             if (card.brand == CARD.BRAND.ZMOTION)
             {
                 err = zmcaux.ZAux_Direct_SetSramp(card.handle, num, (float)ts);
+            }
+#endif
+#if ORIENTALMOTOR
+            if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+            {
+                err = 0;
             }
 #endif
 
@@ -1259,6 +1158,18 @@ namespace MotionCtrl
                 AX_STA sta = AX_STA.UNKOWN;
                 uint iostatus = mt_io;
 
+#if ORIENTALMOTOR
+                if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+                {
+                    AzdMotor.UpdateRemoteIO();
+                    if (AzdMotor.ErrorCount > 3)
+                    {
+                        sta = AX_STA.DISCONNECT;
+                        res = EM_RES.OK;
+                        return sta;
+                    }
+                }
+#endif
                 if ((iostatus & (uint)MTIO.EMG) == (uint)MTIO.EMG)
                     sta = AX_STA.EMG;
                 else if ((iostatus & (uint)MTIO.ALM) == (uint)MTIO.ALM)
@@ -1278,28 +1189,8 @@ namespace MotionCtrl
 #if LEADSHINE
                 else if (card.brand == CARD.BRAND.LEADSHINE)
                 {
-                    if (0 == LTDMC.dmc_check_done((ushort)card.card_id, (ushort)num))
-                        sta = AX_STA.PTP;
-                    else
-                        sta = AX_STA.READY;
-                }
-#endif
-#if GOOGOLTECH
-               else if (card.brand == CARD.BRAND.GOOGOLTECH)
-                {                 
-                    long mm = 1;                 
-                    //get ax io state
-                    int ret = mc.GT_GetSts((short)card.card_id, (short)(num + 1), out GT_pSts, 1, out GT_axis_time);
-                    if (ret == 0)
-                    {
-                        if ((GT_pSts & (1 << 10)) !=0)
-                        {
-                            sta = AX_STA.PTP;
-                        }
-                        else
-                            sta = AX_STA.READY;  
-                       
-                    }
+                    if (0 == LTDMC.dmc_check_done((ushort)card.card_id, (ushort)num)) sta = AX_STA.PTP;
+                    else sta = AX_STA.READY;
                 }
 #endif
 #if ZMOTION
@@ -1309,11 +1200,20 @@ namespace MotionCtrl
                     int err = zmcaux.ZAux_Direct_GetIfIdle(card.handle, num, ref temp);
                     if (err == 0)
                     {
-                        if (temp == 0)
-                            sta = AX_STA.PTP;
+                        if (temp == 0) sta = AX_STA.PTP;
                         else sta = AX_STA.READY;
                     }
                     //else sta = AX_STA.READY;
+                }
+#endif
+#if ORIENTALMOTOR
+                else if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+                {
+                    AzdMotor.UpdateRemoteIO();
+                    if (AzdMotor.remoteio.isALM) sta = AX_STA.ALM;
+                    else if (AzdMotor.remoteio.isMove) sta = AX_STA.PTP;
+                    else if (AzdMotor.remoteio.isReady) sta = AX_STA.READY;
+
                 }
 #endif
                 else sta = AX_STA.READY;
@@ -1349,6 +1249,8 @@ namespace MotionCtrl
                         return "未就绪";
                     case AX_STA.READY:
                         return "就绪";
+                    case AX_STA.DISCONNECT:
+                        return "掉线";
                     default:
                         break;
                 }
@@ -1367,26 +1269,6 @@ namespace MotionCtrl
                     else return false;
                 }
 #endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
-                {
-                    //get ax io state
-
-
-                    int ret = mc.GT_GetSts((short)card.card_id, (short)(num + 1), out GT_pSts, 1, out GT_axis_time);
-                    if (ret == 0)
-                    {
-                        if ((GT_pSts & (1 << 10)) == 0)  //正在运动
-                        {
-                            return true;
-                        }
-                        else
-                            return false;
-                    }
-
-
-                }
-#endif
 #if ZMOTION
                 if (card.brand == CARD.BRAND.ZMOTION)
                 {
@@ -1394,6 +1276,13 @@ namespace MotionCtrl
                     int err = zmcaux.ZAux_Direct_GetIfIdle(card.handle, num, ref temp);
                     if (err == 0 && temp != 0) return true;
                     else return false;
+                }
+#endif
+#if ORIENTALMOTOR
+                else if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+                {
+                    AzdMotor.UpdateRemoteIO();
+                    return !AzdMotor.remoteio.isMove;
                 }
 #endif
                 return false;
@@ -1407,8 +1296,7 @@ namespace MotionCtrl
             {
                 //check
                 res = ChkParam();
-                if (res != EM_RES.OK)
-                    return m_mt_io;
+                if (res != EM_RES.OK) return m_mt_io;
                 uint iostatus = 0;
 #if LEADSHINE
                 if (card.brand == CARD.BRAND.LEADSHINE)
@@ -1418,15 +1306,13 @@ namespace MotionCtrl
 
                     //get svr on
                     short temp = LTDMC.dmc_read_sevon_pin((ushort)card.card_id, (ushort)num);
-                    if (temp == (int)logic_svr_on)
-                        iostatus |= (uint)MTIO.SVON;
+                    if (temp == (int)logic_svr_on) iostatus |= (uint)MTIO.SVON;
 
                     //get inp
                     GPIO.IO_STA pbitstate = GPIO.IO_STA.IN_OFF;
                     uint inport = LTDMC.dmc_read_inport((ushort)card.card_id, 1);
                     pbitstate = ((((inport >> (24 + num)) & 0x01) > 0) ? GPIO.IO_STA.IN_OFF : GPIO.IO_STA.IN_ON);
-                    if (pbitstate == GPIO.IO_STA.IN_ON)
-                        iostatus |= (uint)MTIO.INP;
+                    if (pbitstate == GPIO.IO_STA.IN_ON) iostatus |= (uint)MTIO.INP;
                     m_mt_io = iostatus;
                 }
 #endif
@@ -1487,227 +1373,155 @@ namespace MotionCtrl
                     //}
                     res = UpdateStatusBuff(false);
                     temp = AxStaBuf.mtio;
-                    if (((temp >> 4) & 1) == 1)
-                        iosta |= MTIO.LMTP;
-                    if (((temp >> 5) & 1) == 1)
-                        iosta |= MTIO.LMTN;
-                    if (((temp >> 6) & 1) == 1)
-                        iosta |= MTIO.HOMEING;
-                    if (((temp >> 9) & 1) == 1)
-                        iosta |= MTIO.SLMTP;
-                    if (((temp >> 10) & 1) == 1)
-                        iosta |= MTIO.SLMTN;
-                    if (((temp >> 22) & 1) == 1)
-                        iosta |= MTIO.ALM;
+                    if (((temp >> 4) & 1) == 1) iosta |= MTIO.LMTP;
+                    if (((temp >> 5) & 1) == 1) iosta |= MTIO.LMTN;
+                    if (((temp >> 6) & 1) == 1) iosta |= MTIO.HOMEING;
+                    if (((temp >> 9) & 1) == 1) iosta |= MTIO.SLMTP;
+                    if (((temp >> 10) & 1) == 1) iosta |= MTIO.SLMTN;
+                    if (((temp >> 22) & 1) == 1) iosta |= MTIO.ALM;
 
-                    if (card.GetIOFrBuff(0, GPIO.IO_DIR.IN) == GPIO.IO_STA.IN_ON)
-                        iosta |= MTIO.EMG;
+                    if (card.GetIOFrBuff(0, GPIO.IO_DIR.IN) == GPIO.IO_STA.IN_OFF) iosta |= MTIO.EMG;
                     if (card.GetIOFrBuff(org_num, GPIO.IO_DIR.IN) == GPIO.IO_STA.IN_ON) iosta |= MTIO.ORG;
                     if (svron_num > -1 && card.GetIOFrBuff(svron_num + num, GPIO.IO_DIR.OUT) == logic_svr_on) iosta |= MTIO.SVON;
 
                     m_mt_io = (uint)iosta;
                 }
 #endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
+#if ORIENTALMOTOR
+                else if (card.brand == CARD.BRAND.ORIENTALMOTOR)
                 {
+                    AzdMotor.UpdateRemoteIO();
                     MTIO iosta = 0;
-                    int lGpiValue = 0;
-                    int err = mc.GT_ClrSts((short)card.card_id, 1, 8);
-                    //get ax io state
-                    err += mc.GT_GetSts((short)card.card_id, (short)(num + 1), out GT_pSts, 1, out GT_axis_time);
+                    if (AzdMotor.remoteio.isFWSLS)
+                        iosta |= MTIO.SLMTP;
+                    if (AzdMotor.remoteio.isRVSLS)
+                        iosta |= MTIO.SLMTN;
+                    if (AzdMotor.remoteio.isHomeing)
+                        iosta |= MTIO.HOMEING;
+                    if (AzdMotor.remoteio.isALM)
+                        iosta |= MTIO.ALM;
+                    if (AzdMotor.remoteio.isSVRON)
+                        iosta |= MTIO.SVON;
+                    if (AzdMotor.remoteio.isReady)
+                        iosta |= MTIO.RDY;
+                    if (AzdMotor.remoteio.isINPOS)
+                        iosta |= MTIO.INP;
+                    if (AzdMotor.remoteio.isHomeEnd)
+                        iosta |= MTIO.ORG;
 
-
-                    //(*MoStus).bFlagMError = ((AxStus >> 4) & 1);  // 跟随误差越限标志      
-                    //(*MoStus).bFlagSmoothStop = ((AxStus >> 7) & 1); // 平滑停止标志                       
-                    //(*MoStus).bFlagMotion = ((AxStus >> 10) & 1);   // 规划器运动标志
-                    if (err == 0)
-                    {
-
-
-                        if ((GT_pSts & 0x200) != 0)
-                            iosta |= MTIO.SVON;
-
-                        if ((GT_pSts & 0x20) != 0)
-                        {
-                            iosta |= MTIO.LMTP;
-                            iosta |= MTIO.SLMTP;
-                        }
-
-                        if ((GT_pSts & 0x40) != 0)
-                        {
-                            iosta |= MTIO.LMTN;
-                            iosta |= MTIO.SLMTN;
-                        }
-
-                        if ((GT_pSts & 0x100) != 0)
-                        {
-                            iosta |= MTIO.EMG;
-                        }
-                        //if (GT_axis_time & (1 << 11) == 1)
-                        //    iosta |= MTIO.ORG; 
-
-                        if ((GT_pSts & 0x800) != 0)
-                        {
-                            iosta |= MTIO.RDY;//没有运动,
-                            iosta |= MTIO.INP;//运动到位,
-                        }
-                        //if (encode == ENC_TYPE.YES)
-                        //{
-                        //    err = mc.GT_GetAxisError((short)card.card_id, (short)(num + 1), out pos_err, 1, out mclock);
-                        //    if (err == 0)
-                        //    {
-                        //        if (pos_err < 30)//30脉冲差
-                        //        {
-                        //            iosta |= MTIO.INP;//运动到位,
-
-                        //        }
-
-                        //    }
-                        //}
-
-                        if ((GT_pSts & 0x2) != 0)
-                            iosta |= MTIO.ALM;
-
-                        m_mt_io = (uint)iosta;
-                    }
-                    else
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 获取轴状态异常{1}", disc, err));
-
-                    }
-                    err = mc.GT_GetDi((short)card.card_id, mc.MC_HOME, out lGpiValue);
-                    if (err == 0)
-                    {
-                        if ((lGpiValue & (1 << num)) != 0)
-                            iosta |= MTIO.ORG;
-                    }
-                    //err += mc.GT_GetDi((short)card.card_id, mc.MC_LIMIT_NEGATIVE, out lGpiValue);
-                    //if (err == 0)
-                    //{
-                    //    if ((lGpiValue & (1 << num)) != 0)
-                    //        iosta |= MTIO.LMTN;
-                    //}
-                    //err += mc.GT_GetDi((short)card.card_id, mc.MC_LIMIT_POSITIVE, out lGpiValue);
-                    //if (err == 0)
-                    //{
-                    //    if (((lGpiValue>>num)&1 )!= 0)
-                    //        iosta |= MTIO.LMTP;
-                    //}
-                    if (err != 0)
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 获取轴状态异常{1}", disc, err));
-                    }
                     m_mt_io = (uint)iosta;
-
                 }
 #endif
-
-
                 return m_mt_io;
             }
         }
         #endregion
         #region 轴IO判定
+        public bool _isORG = false;
         public bool isORG
         {
-            get { return (mt_io & (uint)MTIO.ORG) == (uint)MTIO.ORG ? true : false; }
+            get { return _isORG = (mt_io & (uint)MTIO.ORG) == (uint)MTIO.ORG ? true : false; }
         }
+        public bool _isELN = false;
         public bool isELN
         {
-            get { return (mt_io & (uint)MTIO.LMTN) == (uint)MTIO.LMTN ? true : false; }
+            get { return _isELN =(mt_io & (uint)MTIO.LMTN) == (uint)MTIO.LMTN ? true : false; }
         }
+        public bool _isELP = false;
         public bool isELP
         {
-            get { return (mt_io & (uint)MTIO.LMTP) == (uint)MTIO.LMTP ? true : false; }
+            get { return _isELP =(mt_io & (uint)MTIO.LMTP) == (uint)MTIO.LMTP ? true : false; }
         }
+        public bool _isALM = false;
         public bool isALM
         {
-            get { return (mt_io & (uint)MTIO.ALM) == (uint)MTIO.ALM ? true : false; }
+            get { return _isALM = (mt_io & (uint)MTIO.ALM) == (uint)MTIO.ALM ? true : false; }
         }
+        public bool _isSLP = false;
         public bool isSLP
         {
-            get { return (mt_io & (uint)MTIO.SLMTP) == (uint)MTIO.SLMTP ? true : false; }
+            get { return _isSLP =(mt_io & (uint)MTIO.SLMTP) == (uint)MTIO.SLMTP ? true : false; }
         }
+        public bool _isSLN = false;
         public bool isSLN
         {
-            get { return (mt_io & (uint)MTIO.SLMTN) == (uint)MTIO.SLMTN ? true : false; }
+            get { return _isSLN = (mt_io & (uint)MTIO.SLMTN) == (uint)MTIO.SLMTN ? true : false; }
         }
+        public bool _isINP = false;
         public bool isINP
         {
             get
             {
-                if (mt_type != MT_TYPE.SEVER)
-                {
-                    if (isStop)
-                        return true;
-                    else
-                        return false;
-                }
-                return (mt_io & (uint)MTIO.INP) == (uint)MTIO.INP ? true : false;
+                if (mt_type != MT_TYPE.SEVER) return _isINP = true;
+                return _isINP = (mt_io & (uint)MTIO.INP) == (uint)MTIO.INP ? true : false;
             }
         }
+        public bool _isSVRON = false;
         public bool isSVRON
         {
             get
             {
-                if (mt_type == MT_TYPE.VIRTUAL) return true;
-                return (mt_io & (uint)MTIO.SVON) == (uint)MTIO.SVON ? true : false;
+                if (mt_type == MT_TYPE.VIRTUAL) return _isSVRON = true;
+                return _isSVRON = (mt_io & (uint)MTIO.SVON) == (uint)MTIO.SVON ? true : false;
             }
         }
+        public bool _isEMG = false;
         public bool isEMG
         {
-            get { return (mt_io & (uint)MTIO.EMG) == (uint)MTIO.EMG ? true : false; }
+            get { return _isEMG = (mt_io & (uint)MTIO.EMG) == (uint)MTIO.EMG ? true : false; }
         }
+        public bool _isIORDY = false;
         public bool isIORDY
         {
             get
             {
-                if (mt_type != MT_TYPE.SEVER)
-                {
-                    if (isStop)
-                        return true;
-                    else
-                        return false;
-                }
-                return (mt_io & (uint)MTIO.RDY) == (uint)MTIO.RDY ? true : false;
+                if (mt_type != MT_TYPE.SEVER) return _isIORDY = true;
+                return _isIORDY = (mt_io & (uint)MTIO.RDY) == (uint)MTIO.RDY ? true : false;
             }
         }
+        #endregion
+        #region 
+        public bool CurretOn
+        {
+            get
+            {
+#if ORIENTALMOTOR
+                if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+                {
+                    return AzdMotor.CurrentON;
+                }
+#endif
+                return isSVRON;
+            }
+            set
+            {
+#if ORIENTALMOTOR
+                if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+                {
+                    AzdMotor.CurrentON = value;
+                    return;
+                }
+#endif
+                SVRON = value;
+            }
+        }
+
         #endregion
         #region SVR ON/OFF
         public bool SVRON
         {
             get
             {
+
 #if ZMOTION
                 if (card.brand == CARD.BRAND.ZMOTION)
                 {
-                    //int itemp = 0;
-                    //int err = zmcaux.ZAux_Direct_GetAxisEnable_new(card.handle, num, ref itemp);
-                    //if (err == 0)
-                    //{
-                    //    if (itemp == (logic_svr_on == GPIO.IO_STA.OUT_ON ? 1:0)) return true;
-                    //}
-                    //else
-                    //{
-                    //    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 读取SVRON出错，Err:{1}", disc, err));
-                    //    res = EM_RES.ERR;
-                    //}
-                    //return false;
-
                     UpdateStatusBuff();
                     GPIO.IO_STA inport = card.GetIOFrBuff(svron_num + num, GPIO.IO_DIR.OUT);
                     if (inport == logic_svr_on) return true;
                     else return false;
                 }
 #endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
-                {
-                    return (mt_io & (uint)MTIO.SVON) == (uint)MTIO.SVON ? true : false;
-                }
-#endif
-
                 return isSVRON;
             }
             set
@@ -1726,16 +1540,15 @@ namespace MotionCtrl
 #if ZMOTION
                 if (card.brand == CARD.BRAND.ZMOTION)
                 {
-                    err = zmcaux.ZAux_Direct_SetOp(card.handle, svron_num + num, (uint)(value ? (logic_svr_on == GPIO.IO_STA.OUT_ON ? 1 : 0) : (logic_svr_on == GPIO.IO_STA.OUT_ON ? 0 : 1)));
+                    err =zmcaux.ZAux_Direct_SetOp(card.handle, svron_num + num, (uint)(value ? (logic_svr_on == GPIO.IO_STA.OUT_ON ? 1 : 0) : (logic_svr_on == GPIO.IO_STA.OUT_ON ? 0 : 1)));
                     //err = zmcaux.ZAux_Direct_SetAxisEnable(card.handle, num, value ? (logic_svr_on == GPIO.IO_STA.OUT_ON ? 1: 0) : (logic_svr_on == GPIO.IO_STA.OUT_ON ? 0 : 1));
                 }
 #endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
+#if ORIENTALMOTOR
+                else if (card.brand == CARD.BRAND.ORIENTALMOTOR)
                 {
-
-                    err = mc.GT_AxisOn((short)card.card_id, (short)(num + 1)); //
-
+                    if (value) err = AzdMotor.SvrOn() ? 0:1;
+                    else err = AzdMotor.Free() ? 0 : 1;
                 }
 #endif
                 if (err != 0)
@@ -1783,13 +1596,6 @@ namespace MotionCtrl
                     return LTDMC.dmc_read_erc_pin((ushort)card.card_id, (ushort)num) == (short)GPIO.IO_STA.OUT_ON ? true : false;
                 }
 #endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
-                {
-
-                    return !isALM;
-                }
-#endif
                 return false;
             }
             set
@@ -1806,28 +1612,16 @@ namespace MotionCtrl
                     }
                     else res = EM_RES.OK;
                 }
-
-#endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
-                {
-                    int err = mc.GT_ClrSts((short)card.card_id, (short)(num + 1), 1);
-                    if (err != 0)
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 清除报警失败，0x{1:X8}", disc, err));
-                        res = EM_RES.ERR;
-                    }
-                }
-#endif
+#endif                   
             }
         }
         #endregion
         #region 设置触发点
-        public EM_RES DisableHcmp()
+        public EM_RES DisableHcmp(ushort _hcmp_io_num)
         {
             double[] pos = new double[1];
             pos[0] = 10000;
-            res = SetHcmp(pos, hcmp_io_num, 0);
+            res = SetHcmp(pos, _hcmp_io_num, 0);
             return res;
         }
         public EM_RES SetHcmp(double[] pos)
@@ -1865,10 +1659,10 @@ namespace MotionCtrl
 
 
             //set io to H
-            LTDMC.dmc_write_cmp_pin((ushort)card.card_id, cmp, 0);
+            LTDMC.dmc_write_cmp_pin((ushort)card.card_id, cmp, 1);
 
             //config,L=active,T=1000us
-            res = (EM_RES)LTDMC.dmc_hcmp_set_config((ushort)card.card_id, cmp, (ushort)num, 1, 0, 1000);
+            res = (EM_RES)LTDMC.dmc_hcmp_set_config((ushort)card.card_id, cmp, (ushort)num, 1, 1, 1000);
             if (res != EM_RES.OK)
             {
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 触发设置出错,{1}", disc, res));
@@ -1876,14 +1670,14 @@ namespace MotionCtrl
             }
 
             //set mode
-            LTDMC.dmc_hcmp_clear_points((ushort)card.card_id, cmp);
+            //LTDMC.dmc_hcmp_clear_points((ushort)card.card_id, cmp);
             res = (EM_RES)LTDMC.dmc_hcmp_set_mode((ushort)card.card_id, cmp, mode);
             if (res != EM_RES.OK)
             {
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 触发模式设置出错 Err,{1}", disc, res));
                 return res;
             }
-
+            Thread.Sleep(10);
             //clear
             res = (EM_RES)LTDMC.dmc_hcmp_clear_points((ushort)card.card_id, cmp);
             if (res != EM_RES.OK)
@@ -1913,7 +1707,7 @@ namespace MotionCtrl
             else
             {
                 //set io to H
-                LTDMC.dmc_write_cmp_pin((ushort)card.card_id, cmp, 0);
+                LTDMC.dmc_write_cmp_pin((ushort)card.card_id, cmp, 1);
                 //LTDMC.dmc_write_outbit(card_id, hcmp_io_num, 0);
             }
 
@@ -1960,30 +1754,6 @@ namespace MotionCtrl
                 }
             }
 #endif
-#if GOOGOLTECH
-            if (card.brand == CARD.BRAND.GOOGOLTECH)
-            {
-                //dec stop
-                for (int trycnt = 0; trycnt < 5; trycnt++)
-                {
-                    //VAR.msg.AddMsg(Msg.EM_MSGTYPE.DBG, string.Format("{0} STOP", disc));
-                    err = mc.GT_Stop((short)card.card_id, (int)(1 << num), 0);//平滑停止
-                    if (err == 0) break;
-                    Thread.Sleep(10);
-                }
-
-                //EMG stop
-                if (bemg || err != 0)
-                {
-                    err = mc.GT_Stop((short)card.card_id, (int)(1 << num), (int)(1 << num));//急停                    
-                    if (err != 0)
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 停止出错，{1}", disc, res));
-                        res = EM_RES.ERR;
-                    }
-                }
-            }
-#endif
 #if ZMOTION
             if (card.brand == CARD.BRAND.ZMOTION)
             {
@@ -2002,6 +1772,12 @@ namespace MotionCtrl
                 }
             }
 #endif
+#if ORIENTALMOTOR
+            else if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+            {
+                res = AzdMotor.Stop() ? EM_RES.OK : EM_RES.ERR;
+            }
+#endif
             return res;
         }
         #endregion
@@ -2011,7 +1787,7 @@ namespace MotionCtrl
             //check
             res = ChkParam();
             if (res != EM_RES.OK) return res;
-            int timeout = timeout_ms;
+            int timeout = timeout_ms;            
             //wait stop
             while (true)
             {
@@ -2077,44 +1853,25 @@ namespace MotionCtrl
                     }
                 }
 #endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
+#if ORIENTALMOTOR
+                else if (card.brand == CARD.BRAND.ORIENTALMOTOR)
                 {
-                    //axis is stop
-                    //short cap_home_ret = 0;
-                    //int capture_pos;
-                    //uint m_parm = 0;
-
-                    //int err = mc.GT_SetCaptureMode((short)card.card_id, (short)(num + 1), mc.CAPTURE_INDEX);
-                    // err += mc.GT_GetCaptureStatus((short)card.card_id, (short)(num + 1), out cap_home_ret, out capture_pos, 1, out m_parm);
-                    //if (0 != cap_home_ret)
-                    //{
-                    //    Stop();
-                    //    break;
-                    //}
-                    //if (isStop || (err != 0))
-                    //{
-                    //    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 未找到原点,0x{1:X8}", disc, res));
-                    //    home_status = HOME_STA.ERROR;
-                    //    return res = EM_RES.ERR;
-                    //}
-                    if (isStop)
+                    AzdMotor.UpdateRemoteIO();
+                    if (!AzdMotor.remoteio.isMove)
                     {
-                        Thread.Sleep(50);
-                        if (isStop)
+                        if (bquit)
                         {
-                            if ((status != AX_STA.READY) && (
-                                ((home_dir == AX_DIR.N) && (status != AX_STA.ELN)) ||
-                                ((home_dir == AX_DIR.P) && (status != AX_STA.ELP))))
-                            {
-                                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 异常停止,{1}！", disc, str_status));
-                                Stop();
-                                return res = EM_RES.ERR;
-                            }                           
-                            break;
+                            VAR.msg.AddMsg(Msg.EM_MSGTYPE.WAR, string.Format("{0} 用户取消停止！", disc));
+                            return res = EM_RES.QUIT;
                         }
+                        if (status == AX_STA.ALM)
+                        {
+                            VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 异常停止,{1}！", disc, str_status));
+                            Stop();
+                            return res = EM_RES.ERR;
+                        }
+                        break;
                     }
-
                 }
 #endif
                 //time out
@@ -2132,29 +1889,28 @@ namespace MotionCtrl
                 }
             }
             Thread.Sleep(100);
-
             return res = EM_RES.OK;
         }
 
         #endregion
         #region 等待轴停止
-        public EM_RES WaitForStop(ref bool pbquit, int timeout_ms, bool bdoevent = false, bool bshowmsg = true)
+        public EM_RES WaitForStop(ref bool pbquit, int timeout_ms,bool bdoevent = false, bool bshowmsg=true)
         {
             //check
             res = ChkParam();
-            if (res != EM_RES.OK)   return res;
+            if (res != EM_RES.OK) return res;
             int timeout = timeout_ms;
+
             //wait stop
             while (true)
             {
                 //quit
-                if (pbquit)
-                    return res = EM_RES.QUIT;
+                if (pbquit) return res=EM_RES.QUIT;
+
                 //check safe protect
                 if (ChkSafeSen != null && EM_RES.OK != ChkSafeSen(id))
                 {
-                    if (VAR.gsys_set.status == EM_SYS_STA.RESET) 
-                        Stop();
+                    if (VAR.gsys_set.status == EM_SYS_STA.RESET) Stop();
                 }
 #if LEADSHINE
                 if (card.brand == CARD.BRAND.LEADSHINE)
@@ -2176,21 +1932,6 @@ namespace MotionCtrl
                         }
                     }
                 }
-
-#endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
-                {
-                    //axis is stop 
-                    Thread.Sleep(10);
-                    if (isStop)   //已经停止
-                    {
-                         Thread.Sleep(10);
-                         if (isStop)   break;
-                         
-                    }
-
-                }
 #endif
 #if ZMOTION
                 if (card.brand == CARD.BRAND.ZMOTION)
@@ -2211,48 +1952,66 @@ namespace MotionCtrl
                     }
                 }
 #endif
+#if ORIENTALMOTOR
+                else if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+                {
+                    AzdMotor.UpdateRemoteIO();
+                    if (!AzdMotor.remoteio.isMove)
+                    {
+                        if (status == AX_STA.ALM)
+                        {
+                            VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 异常停止,{1}！", disc, str_status));
+                            Stop();
+                            return res = EM_RES.ERR;
+                        }
+                        break;
+                    }
+                }
+#endif
                 //time out
-                if (timeout_ms <= 0)
+                if (timeout_ms == 0)
                 {
                     Stop();
                     if (bshowmsg) VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 等待停止超时({1}ms)！", disc, timeout));
-                    return res = EM_RES.TIMEOUT;
+                    return res=EM_RES.TIMEOUT;
                 }
                 if (timeout_ms > 0)
                 {
-                    timeout_ms = timeout_ms-10;
-                    Thread.Sleep(10);
+                    timeout_ms-=5;
+                    Thread.Sleep(5);
                     if (bdoevent) Application.DoEvents();
                 }
             }
-            return res = EM_RES.OK;
+            return res=EM_RES.OK;
         }
         #endregion
 
         #region 等待轴INP
-        public EM_RES WaitINP(ref bool pbquit, int timeout_ms = 100, bool bdoevent = false)
+        public EM_RES WaitINP(ref bool pbquit, int timeout_ms=100, bool bdoevent = false)
         {
             //check
             res = ChkParam();
             if (res != EM_RES.OK) return res;
+
             int time_temp = timeout_ms;
+
             //wait stop
             while (true)
             {
                 //quit
-                if (pbquit)
-                    return res = EM_RES.QUIT;
+                if (pbquit) return res = EM_RES.QUIT;
+
                 //check safe protect
                 if (ChkSafeSen != null && EM_RES.OK != ChkSafeSen(id))
                 {
-                    if (VAR.gsys_set.status == EM_SYS_STA.RESET)
-                        Stop();
+                    if (VAR.gsys_set.status == EM_SYS_STA.RESET) Stop();
                 }
+
                 //axis is stop             
                 if (isINP) break;
 
                 //time out
-                if (timeout_ms <= 0)
+                if (timeout_ms == 0)
                 {
                     //Stop();
                     VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 等待到位信号超时({1}ms)！", disc, time_temp));
@@ -2269,19 +2028,39 @@ namespace MotionCtrl
         }
         #endregion
         #region 等待定位完成
-        public EM_RES WaitForMoveDone(ref bool pbquit, double targetpos, int timeout_ms, bool bdoevent = false)
+        public EM_RES WaitForMoveDone(ref bool pbquit, double targetpos ,int timeout_ms, bool bdoevent = false)
         {
-          if(!isStop)
-          {
-              res = WaitForStop(ref pbquit, timeout_ms, bdoevent);
-              if (res != EM_RES.OK) return res;
-          }
-          if (isELN || isELP)
-              return EM_RES.PARA_OUTOFRANG;
-            if (Math.Abs(targetpos  - fcmd_pos) >1)
+            //wait stop
+            res = WaitForStop(ref pbquit, timeout_ms, bdoevent);
+            if (res != EM_RES.OK) return res;
+
+            //check pos
+            //double tol = (1.0 / pul_per_mm * 2);
+            //if (tol < 0.01) tol = 0.01;
+            if (Math.Abs(targetpos* pul_per_mm - cmd_pos) > 3)
             {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.WAR, string.Format("{0}异常停止,MtIO:0x{1:X8},tag:{2:F3},cmd:{3:F3},enc:{4:F3}", disc, mt_io, targetpos, fcmd_pos, fenc_pos));
-                return res = EM_RES.ERR;              
+                //wait and check agin
+                Thread.Sleep(10);
+                res = WaitForStop(ref pbquit, timeout_ms, bdoevent);
+                if (res != EM_RES.OK) return res;
+
+#if ZMOTION
+                //通信更新速度不够快，延迟更新再判断
+                if (card.brand == CARD.BRAND.ZMOTION)
+                {
+                    Thread.Sleep(50);
+                    if (Math.Abs(targetpos * pul_per_mm - cmd_pos) > 3) return EM_RES.OK;
+                }
+#endif
+
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.WAR, string.Format("{0} 定位偏差:{1:0.000}", disc ,fcmd_pos - targetpos));
+                Thread.Sleep(50);
+
+                if (Math.Abs(targetpos * pul_per_mm - cmd_pos) > 3)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.WAR, string.Format("{0}异常停止,MtIO:0x{1:X8},tag:{2:F3},cmd:{3:F3},enc:{4:F3}", disc, mt_io,targetpos,fcmd_pos,fenc_pos));
+                    return res = EM_RES.RETRY;
+                }
             }
             return res = EM_RES.OK;
         }
@@ -2372,10 +2151,10 @@ namespace MotionCtrl
             double[] p = new double[10];
             double[] t = new double[10];
             double[] spd = new double[10];
-            uint n = 0;
+            uint n=0;
 
             //calc a
-            double tacc = this.tacc * 1.2;
+            double tacc = this.tacc*1.2;
             double a = mov_spd / tacc;
             if (a > max_acc) a = max_acc;
 
@@ -2383,7 +2162,7 @@ namespace MotionCtrl
             double cur_pos = fcmd_pos;
             //get the near point
             double cap_p = Math.Abs(tri_pos.Min() - cur_pos) < Math.Abs(tri_pos.Max() - cur_pos) ? tri_pos.Min() - cur_pos : tri_pos.Max() - cur_pos;
-            double stop_p = stop_pos - cur_pos;
+            double stop_p = stop_pos - cur_pos;            
 
             //direct
             int dir_p = cap_p > stop_p ? -1 : 1;
@@ -2520,7 +2299,7 @@ namespace MotionCtrl
                 // mm-> puls
                 pos[i] = (int)(p[i] * pul_per_mm * dir_p);
                 spd[i] = (int)(spd[i] * pul_per_mm * dir_p);
-
+                
             }
             res = (EM_RES)LTDMC.dmc_PvtTable((ushort)card.card_id, (ushort)num, n, t, pos, spd);
             if (res != EM_RES.OK)
@@ -2536,8 +2315,8 @@ namespace MotionCtrl
             if (res != EM_RES.OK) return res;
 
             //set triger
-            res = SetHcmp(tri_pos, hcmp_io_num);
-            if (res != EM_RES.OK) return res;
+            res =SetHcmp(tri_pos, hcmp_io_num);
+            if (res != EM_RES.OK) return res;            
 
             //start pvt       
             ushort[] axislist = new ushort[1];
@@ -2545,7 +2324,7 @@ namespace MotionCtrl
             res = (EM_RES)LTDMC.dmc_PvtMove((ushort)card.card_id, 1, axislist);
             if (res != EM_RES.OK)
             {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} Pvt运行出错,{1}", disc, res));
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} Pvt运行出错,{1}",disc, res));
                 return res;
             }
 
@@ -2560,25 +2339,38 @@ namespace MotionCtrl
         /// <param name="bquit"></param>
         /// <param name="pos">目标位置</param>
         /// <param name="wait_ms">超时时间</param>
-        /// <param name="bdoevent">线程刷新等待 </param>
+        /// <param name="bdoevent"></param>
         /// <param name="bchkpos">True:基于坐标安全检查(ChkSafePos)</param>
         /// <returns></returns>
-        public EM_RES MoveTo(ref bool bquit, double pos, int wait_ms = 0, bool bdoevent = false, bool bchkpos = true)
+        public EM_RES MoveTo(ref bool bquit, double pos,int wait_ms = 0, bool bdoevent=false, bool bchkpos = true)
         {
+            EM_RES ret = EM_RES.OK;
             if (mt_type == MT_TYPE.VIRTUAL) return res = EM_RES.OK;
+
             //check param
-            res = ChkParam();
-            if (res != EM_RES.OK) return res;
+            ret = ChkParam();
+            if (ret != EM_RES.OK) return res = ret;
+
             int try_cnt = 0;
+
         TRYAGAIN:
+
+            //检查回零状态
+            if(home_status != HOME_STA.HOMING && home_status != HOME_STA.OK)
+            {
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.WAR, string.Format("{0} 未回零!",disc));
+                return res = EM_RES.ERR;
+            }
+
             //用户取消
             if (bquit == true) return res = EM_RES.QUIT;
-            if (try_cnt > 0)
+
+            if(try_cnt>0) 
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.WAR, "ABS_MOVE_TO(),重试!");
             if (try_cnt++ >= 3) return res;
 
             //在范围+/- 3puls 则OK
-            if (Math.Abs(cmd_pos - pos * pul_per_mm) < 3)
+            if (Math.Abs(cmd_pos - pos* pul_per_mm) < 3)
             {
                 //targetpos = pos;
                 return res = EM_RES.OK;
@@ -2594,26 +2386,28 @@ namespace MotionCtrl
             //check safe sensor
             if (ChkSafeSen != null)
             {
-                res = ChkSafeSen(id);
-                if (res != EM_RES.OK) return res;
+                ret = ChkSafeSen(id);
+                if (ret != EM_RES.OK) return res = ret;
             }
 
             //check safe pos
             if (bchkpos && ChkSafePos != null)
             {
-                res = ChkSafePos(id, pos);
-                if (res != EM_RES.OK) return res;
+                ret = ChkSafePos(id,pos);
+                if (ret != EM_RES.OK) return res = ret;
             }
+
             //check state 
             switch (status)
             {
+                case AX_STA.EMG:
                 case AX_STA.DIS:
                     VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + str_status);
-                    res = EM_RES.ERR; //未上电
+                    ret = EM_RES.ERR;
                     break;
                 case AX_STA.ALM:
                     VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + str_status);
-                    res = EM_RES.ERR;
+                    ret = EM_RES.ERR;
                     break;
                 case AX_STA.PTP:
                     //change target pos
@@ -2644,11 +2438,11 @@ namespace MotionCtrl
                     //else
                     {
                         //wait stop and retry
-                        res = WaitForStop(ref bquit, 9000, bdoevent);
-                        if (res != EM_RES.OK)
+                        ret = WaitForStop(ref bquit, 5000, bdoevent);
+                        if (ret != EM_RES.OK)
                         {
                             VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} 等待定位完成超时(5S)!", disc));
-                            res = EM_RES.ERR;
+                            ret = EM_RES.ERR;
                             goto TRYAGAIN;
                         }
                     }
@@ -2660,28 +2454,28 @@ namespace MotionCtrl
                 case AX_STA.READY:
                     if ((status == AX_STA.ELN || status == AX_STA.SLN) && pos < fcmd_pos)
                     {
-                     //   VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} 异常, {1}", disc, str_status));
-                        res = EM_RES.OK;
+                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} 异常, {1}", disc, str_status));
+                        ret = EM_RES.ERR;
                         break;
                     }
-                    if ((status == AX_STA.ELP || status == AX_STA.SLP) && pos > fcmd_pos)
+                    if ((status == AX_STA.ELP || status == AX_STA.SLP )&& pos > fcmd_pos)
                     {
-                        //VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} 异常, {1}", disc, str_status));
-                        res = EM_RES.OK;
+                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} 异常, {1}", disc, str_status));
+                        ret = EM_RES.ERR;
                         break;
                     }
                     //check safe sensor
                     if (ChkSafeSen != null)
                     {
-                        res = ChkSafeSen(id);
-                        if (res != EM_RES.OK) return res;
+                        ret = ChkSafeSen(id);
+                        if (ret != EM_RES.OK) return res = ret;
                     }
 
                     //check safe pos
                     if (ChkSafePos != null)
                     {
-                        res = ChkSafePos(id, pos);
-                        if (res != EM_RES.OK) return res;
+                        ret = ChkSafePos(id, pos);
+                        if (ret != EM_RES.OK) return res = ret;
                     }
 
                     //ttl distance
@@ -2698,42 +2492,19 @@ namespace MotionCtrl
                         if (err != 0)
                         {
                             VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} 定位命令出错，0x{1:X8}", disc, err));
-                            res = EM_RES.ERR;
+                            ret = EM_RES.ERR;
                         }
                     }
 #endif
 #if ZMOTION
                     if (card.brand == CARD.BRAND.ZMOTION)
                     {
-
                         err = zmcaux.ZAux_Direct_Singl_MoveAbs(card.handle, num, (float)(pos * pul_per_mm));
                         if (err != 0)
                         {
                             VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} 定位命令出错，Err:{1}", disc, err));
-                            res = EM_RES.ERR;
+                            ret = EM_RES.ERR;
                         }
-                    }
-#endif
-#if GOOGOLTECH
-                    if (card.brand == CARD.BRAND.GOOGOLTECH)
-                    {
-                        //mc.TTrapPrm m_axis_prm;
-                        //m_axis_prm.acc = Tacc;
-                        //m_axis_prm.dec = Tdec;
-                        //m_axis_prm.velStart = spd_start * pul_per_mm;
-                        //m_axis_prm.smoothTime = (short)(ts * 1000);
-                        //err = mc.GT_SetTrapPrm((short)card.card_id, (short)(num + 1), ref m_axis_prm);
-                        EM_RES ret = SetToWorkSpd();
-                        if (ret != EM_RES.OK) MessageBox.Show("速度设置异常!");
-                        err = mc.GT_SetPos((short)card.card_id, (short)(num + 1), (int)(pos * pul_per_mm));
-                        err += mc.GT_Update((short)card.card_id, 1 << num);
-                                           
-                        if (err != 0)
-                        {
-                            VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} 定位命令出错，Err:{1}", disc, err));
-                            res = EM_RES.ERR;
-                        }
-
                     }
 #endif
                     //wait for start move
@@ -2742,23 +2513,22 @@ namespace MotionCtrl
                 default:
                     //res status
                     VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} 异常, {1}", disc, str_status));
-                    res = EM_RES.ERR;
+                    ret = EM_RES.ERR;
                     break;
-            }
+            }            
 
             //wait for done
             if (wait_ms != 0)
             {
-                res = WaitForMoveDone(ref bquit, pos, wait_ms, bdoevent);
-                if (res == EM_RES.ERR)
+                ret = WaitForMoveDone(ref bquit, pos, wait_ms, bdoevent);
+                if (ret != EM_RES.OK)
                 {
+                    res = ret;
                     goto TRYAGAIN;
                 }
-                else
-                return res; //限位  EM_RES.PARA_OUTOFRANG
             }
 
-            return EM_RES.OK;
+            return res = ret;
         }
         #endregion
         #region JOG运动
@@ -2766,7 +2536,7 @@ namespace MotionCtrl
         {
             if (!isStop)
             {
-                if (JOGDir == AX_DIR.P)
+                if (JOGDir ==  AX_DIR.P)
                 {
                     if ((slp - fcmd_pos) < t * spd_manual_high) Stop();
                 }
@@ -2778,31 +2548,15 @@ namespace MotionCtrl
         }
         public EM_RES JOG_Step(ref bool bquit, AX_DIR dir)
         {
-            EM_RES ret=SetToManualHighSpd();
-            if (ret != EM_RES.OK) MessageBox.Show("速度设置异常!");
-           // double m_pref_pos;
-           // uint m_test = 1;
-           //int  err = mc.GT_GetPrfPos((short)card.card_id, (short)(num + 1), out  m_pref_pos, 1, out m_test);
-           //if (dir == AX_DIR.N)
-           //{
-
-           //    ret = MoveTo(ref bquit, (int)(m_pref_pos / pul_per_mm) - 1, 10000, true);
-           //}
-           //else
-           //ret = MoveTo(ref bquit, (int)(m_pref_pos / pul_per_mm)+ 1, 10000, true);
-           // if (ret != EM_RES.OK) 
-           //     MessageBox.Show("定位异常!");
-           
-             ret = JOG_Move(ref bquit, dir, spd_manual_high, true, manual_step);
-
-
+            SetToManualHighSpd();
+            EM_RES ret = JOG_Move(ref bquit, dir, spd_manual_high, true, manual_step);
             bkey = false;
             return ret;
         }
-        public EM_RES JOG_Step(ref bool bquit, AX_DIR dir, double step)
+        public EM_RES JOG_Step(ref bool bquit, AX_DIR dir,double step)
         {
             SetToManualHighSpd();
-            EM_RES ret = JOG_Move(ref bquit, dir, spd_manual_high, true, step);
+            EM_RES ret =JOG_Move(ref bquit, dir, spd_manual_high, true, step);
             bkey = false;
             return ret;
         }
@@ -2820,20 +2574,20 @@ namespace MotionCtrl
             else res = SetToManualLowSpd();
             if (res != EM_RES.OK) return res;
 
-            res = JOG_Move(ref bquit, dir, bman_high_spd ? spd_manual_high : spd_manual_low, false, 0);
+            res = JOG_Move(ref bquit, dir, bman_high_spd? spd_manual_high: spd_manual_low, false, 0);
             return res;
         }
         public EM_RES JOG_VMove(ref bool bquit, AX_DIR dir, double spd)
         {
-            if (spd > spd_manual_high + 1) res = SetToManualHighSpd();
-            if (spd < spd_manual_low - 1) res = SetToManualLowSpd();
+            if (spd > spd_manual_high+1) res = SetToManualHighSpd();
+            if (spd < spd_manual_low-1) res = SetToManualLowSpd();
             if (res != EM_RES.OK) return res;
 
             res = JOG_Move(ref bquit, dir, mspd_cur, false, 0);
             return res;
         }
 
-        public EM_RES JOG_Move(ref bool bquit, AX_DIR dir, double spd, bool bstep = false, double step = 0)
+        public EM_RES JOG_Move(ref bool bquit,AX_DIR dir, double spd, bool bstep = false, double step=0)
         {
             if (mt_type == MT_TYPE.VIRTUAL) return res = EM_RES.OK;
 
@@ -2842,17 +2596,20 @@ namespace MotionCtrl
             if (res != EM_RES.OK) return res;
 
             //check pos every enter
-            if (dir == AX_DIR.P && fcmd_pos > slp || dir == AX_DIR.N && fcmd_pos < sln)
+            //if (card.brand != CARD.BRAND.ORIENTALMOTOR)
             {
-                Stop();
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 点动，软限位!", disc));
-                return res = EM_RES.ERR;
+                if (dir == AX_DIR.P && fcmd_pos > slp || dir == AX_DIR.N && fcmd_pos < sln)
+                {
+                    Stop();
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 点动，软限位!", disc));
+                    return res = EM_RES.ERR;
+                }
             }
 
             //run once time before release
             if (bkey) return EM_RES.ABORT;
             //key down
-            bkey = true;
+            bkey = true; 
 
             //check safe sensor
             if (ChkSafeSen != null)
@@ -2870,12 +2627,12 @@ namespace MotionCtrl
             //check safe pos
             if (ChkSafePos != null)
             {
-                res = ChkSafePos(id);
+                res = ChkSafePos(id, fenc_pos + (dir == AX_DIR.P ? 1 : -1));
                 if (res != EM_RES.OK) return res;
             }
 
             //not ready then return            
-            if (status != AX_STA.READY)
+            if ((card.brand != CARD.BRAND.ORIENTALMOTOR) && status != AX_STA.READY)
             {
                 if (dir == AX_DIR.N && (status == AX_STA.ELP || status == AX_STA.SLP)) { ;}
                 else if (dir == AX_DIR.P && (status == AX_STA.ELN || status == AX_STA.SLN)) { ;}
@@ -2885,7 +2642,7 @@ namespace MotionCtrl
                     VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 点动出错,{1}", disc, str_status));
                     return res = EM_RES.OK;
                 }
-            }
+            }            
 
             //set speed	
             res = SetSpeed(spd);
@@ -2895,7 +2652,7 @@ namespace MotionCtrl
                 return EM_RES.ERR;
             }
 
-            if (spd != spd_cur)
+            if (Math.Abs(spd-spd_cur)>0.1)
             {
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 点动速度异常!", disc));
                 return EM_RES.ERR;
@@ -2904,7 +2661,6 @@ namespace MotionCtrl
             // vmove
             JOGDir = dir;
             int err = 0;
-            int dis = (int)(step * pul_per_mm + 0.5);
             if (bstep == false)
             {
 #if LEADSHINE
@@ -2916,40 +2672,7 @@ namespace MotionCtrl
 #if ZMOTION
                 if (card.brand == CARD.BRAND.ZMOTION)
                 {
-                    err = zmcaux.ZAux_Direct_Singl_Vmove(card.handle, num, dir == AX_DIR.P ? 1 : -1);
-                }
-#endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
-                {
-               //     mc.TJogPrm GT_jog;
-             //       GT_jog.acc = tacc;
-              //      GT_jog.dec = tdec;
-            //        GT_jog.smooth = 25;
-             //       err = mc.GT_PrfJog((short)card.card_id, (short)(num + 1));
-            //        err += mc.GT_SetJogPrm((short)card.card_id, (short)(num + 1), ref GT_jog);
-            //        err += mc.GT_SetVel((short)card.card_id, (short)(num + 1), spd * pul_per_mm/1000);
-           //         err += mc.GT_Update((short)card.card_id, 1 << num);
-                    mc.TTrapPrm m_axis_prm;
-                    m_axis_prm.acc = tacc;
-                    m_axis_prm.dec = tdec;
-                    m_axis_prm.velStart = spd_start * pul_per_mm;
-                    m_axis_prm.smoothTime = 25;
-                    err = mc.GT_SetTrapPrm((short)card.card_id, (short)(num + 1), ref m_axis_prm);
-                    err = mc.GT_SetVel((short)card.card_id, (short)(num + 1), spd * pul_per_mm / 1000);
-                    if (dir == AX_DIR.N)
-                    {
-                        dis = -dis;
-                    }
-                    double m_pref_pos;
-                    uint m_test = 1;
-                    err = mc.GT_GetPrfPos((short)card.card_id, (short)(num + 1), out  m_pref_pos, 1, out m_test);
-                    //int mret = mc.GT_GetAxisEncPos((short)card.card_id, (short)(num + 1), out  m_pref_pos, 1, out m_test);
-                    if (err == 0)
-                    {
-                        err += mc.GT_SetPos((short)card.card_id, (short)(num + 1), (int)m_pref_pos + dis);
-                        err += mc.GT_Update((short)card.card_id, 1 << num);
-                    }
+                    err = zmcaux.ZAux_Direct_Singl_Vmove(card.handle, num, dir == AX_DIR.P ? 1 : -1);                    
                 }
 #endif
                 if (err != 0)
@@ -2978,7 +2701,7 @@ namespace MotionCtrl
                     }
                 }
                 //calc step
-              
+                int dis = (int)(step * pul_per_mm + 0.5);
 #if LEADSHINE
                 if (card.brand == CARD.BRAND.LEADSHINE)
                 {
@@ -2990,55 +2713,21 @@ namespace MotionCtrl
                     }
                 }
 #endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
-                {
-                    //double now_pos = 0;
-                    //uint gt_olock = 0;
-
-                    //int mret;
-                    //mret = mc.GT_GetPrfPos((short)(card.card_id), (short)(num + 1), out now_pos, 1, out gt_olock);
-                    //if (mret != 0)
-                    //{
-                    //    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 获取当前位置失败Err:{1}！", disc, err));
-                    //    Stop();
-                    //    return res = EM_RES.ERR;
-                    //}
-                    //res = MoveTo(ref bquit, now_pos / pul_per_mm + ((dir == AX_DIR.P) ? step : -step), 99000);
-                    mc.TTrapPrm m_axis_prm;
-                    m_axis_prm.acc = tacc;
-                    m_axis_prm.dec = tdec;
-                    m_axis_prm.velStart = spd_start * pul_per_mm;
-                    m_axis_prm.smoothTime = 25;
-                    err = mc.GT_SetTrapPrm((short)card.card_id, (short)(num + 1), ref m_axis_prm);
-                    err = mc.GT_SetVel((short)card.card_id, (short)(num + 1), spd * pul_per_mm/1000);
-                    if(dir == AX_DIR.N)
-                    {
-                      dis = -dis;
-                    }
-                    double m_pref_pos;
-                    uint m_test = 1;
-                     err = mc.GT_GetPrfPos((short)card.card_id, (short)(num + 1), out  m_pref_pos, 1, out m_test);
-                    //int mret = mc.GT_GetAxisEncPos((short)card.card_id, (short)(num + 1), out  m_pref_pos, 1, out m_test);
-                    if (err == 0)
-                    {
-                        err += mc.GT_SetPos((short)card.card_id, (short)(num + 1), (int)m_pref_pos + dis);
-                        err += mc.GT_Update((short)card.card_id, 1 << num);
-                    }
-                  
-                    if (err != 0)
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0} step命令出错，Err:{1}", disc, err));
-                        res = EM_RES.ERR;
-                    }
-                    bool mquit = false;
-                    //res = WaitForStop(ref mquit, 2000, false);
-                }
-#endif
 #if ZMOTION
                 if (card.brand == CARD.BRAND.ZMOTION)
                 {
                     err = zmcaux.ZAux_Direct_Singl_Move(card.handle, num, (dir == AX_DIR.P) ? dis : -dis);
+                }
+#endif
+
+#if ORIENTALMOTOR
+                if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+                {
+                    //protect
+                    if (true == AzdMotor.MoveToSelDat(ref bquit, (byte)(dir == AX_DIR.P ? 1 : 0)))
+                        return EM_RES.OK;
+                    else
+                        return EM_RES.ERR;
                 }
 #endif
                 if (err != 0)
@@ -3061,7 +2750,7 @@ namespace MotionCtrl
             Stop();
             bool bquit = false;
             res = WaitForStop(ref bquit, 1000, true);
-            if (res == EM_RES.OK) res = SetToManualHighSpd();
+            if(res ==EM_RES.OK )res = SetToManualHighSpd();
             return res;
         }
         #endregion
@@ -3075,6 +2764,13 @@ namespace MotionCtrl
         }
         public EM_RES HomeOffset(ref bool bquit, int timeout_ms = 100, double offset = double.MaxValue, bool bdoevent = true)
         {
+#if ORIENTALMOTOR
+            if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+            {
+                return res = EM_RES.OK;
+            }
+#endif
+
             //wait home completed
             //auto time
             if (timeout_ms == -1)
@@ -3096,8 +2792,7 @@ namespace MotionCtrl
             Stop();
             Thread.Sleep(100);
 
-            if (offset == double.MaxValue)
-                offset = home_offset;
+            if (offset == double.MaxValue) offset = home_offset;
 
             //check offset
             if (offset > slp || offset < sln)
@@ -3116,16 +2811,15 @@ namespace MotionCtrl
                 if (home_task_ret != EM_RES.OK) return home_task_ret;
 
                 fcmd_pos = -offset;
-                if (encode == ENC_TYPE.YES)
-                    fenc_pos = -offset;
+                if (encode == ENC_TYPE.YES) fenc_pos = -offset;
             }
-
             catch (System.ArgumentException ex)
             {
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, ex.Message);
                 home_status = HOME_STA.ERROR;
                 return res = EM_RES.ERR;
             }
+
             //set spd	
             res = SetSpeed(home_spd * 3);
             //if (res != EM_RES.OK) return res;
@@ -3135,26 +2829,21 @@ namespace MotionCtrl
             if (ms < 5000) ms = 5000;
             if (ms > 20000) ms = 20000;
             //move
-            res = MoveTo(ref bquit, offset, ms, bdoevent);
-
+            res = MoveTo(ref bquit, 0, ms, bdoevent);
             if (res != EM_RES.OK)
             {
                 home_status = HOME_STA.ERROR;
                 return res;
             }
+
+            if (res != EM_RES.OK)
+                home_status = HOME_STA.ERROR;
             else
                 home_status = HOME_STA.OK;
-           int err= mc.GT_ZeroPos((short)card.card_id, (short)(num + 1), 1);
-            if (err != 0)
-            {
-                home_status = HOME_STA.ERROR;
-                return res;
-            }                 
             return res;
         }
-
-        public EM_RES Home(ref bool bquit, double spd, ushort mode, AX_DIR dir, int timeout_ms = 0, bool bdoevent = true)
-        {
+        public EM_RES Home(ref bool bquit,double spd, ushort mode, AX_DIR dir, int timeout_ms = 0, bool bdoevent = true)
+        {            
             if (mt_type == MT_TYPE.VIRTUAL) return res = EM_RES.OK;
             if (bquit) return EM_RES.QUIT;
 
@@ -3177,11 +2866,18 @@ namespace MotionCtrl
             }
 
             //svron
-            if (!isSVRON)
+            try
             {
-                SVRON = true;
-                //wait for svr on
-                Thread.Sleep(1000);
+                if (!isSVRON)
+                {
+                    SVRON = true;
+                    //wait for svr on
+                    Thread.Sleep(1000);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
             }
 
             //dis soflt limit
@@ -3192,11 +2888,13 @@ namespace MotionCtrl
             if (status == AX_STA.EMG)
             {
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, "急停信号按下");
+                Stop();
                 return res = EM_RES.ERR;
             }
-            if (status == AX_STA.ALM)
+            if (status == AX_STA.ALM && card.brand != CARD.BRAND.ORIENTALMOTOR)
             {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc + str_status);
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, disc+str_status);
+                Stop();
                 return res = EM_RES.ERR;
             }
 
@@ -3223,222 +2921,38 @@ namespace MotionCtrl
                 err = LTDMC.dmc_set_homemode((ushort)card.card_id, (ushort)num, (ushort)dir, 1, mode, 0);
                 if (err != 0)
                 {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}设置回零模式出错,0x{1:X8}", disc, res));
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}设置回零模式出错,0x{1:X8}", disc, err));
                     return res = EM_RES.ERR;
                 }
-
+                                
                 err = LTDMC.dmc_home_move((ushort)card.card_id, (ushort)num);
                 if (err != 0)
                 {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}回零出错,0x{1:X8}", disc, res));
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}回零出错,0x{1:X8}", disc, err));
                     home_status = HOME_STA.ERROR;
                     return res = EM_RES.ERR;
                 }
             }
 #endif
-#if GOOGOLTECH
-            if (card.brand == CARD.BRAND.GOOGOLTECH)
-            {
-
-                //set mode
-                int m_obj_pos = 9999999;
-                err += mc.GT_SetCaptureSense((short)card.card_id, (short)(num + 1), mc.CAPTURE_HOME, 0);
-                if (dir == AX_DIR.N)
-                {
-                    m_obj_pos = -9999999;
-                    err += mc.GT_SetCaptureSense((short)card.card_id, (short)(num + 1), mc.CAPTURE_HOME, 1);
-                }
-                short cap_home_ret = 0;
-                int capture_pos;
-                uint m_parm;
-                ulong m_home_time = 0;
-                double m_pref_pos;
-                uint m_test = 1;
-                //一次捕捉
-                err += mc.GT_ClrSts((short)card.card_id, (short)(num + 1), 1);
-                err += mc.GT_SetCaptureMode((short)card.card_id, (short)(num + 1), mc.CAPTURE_HOME);
-                err += mc.GT_SetPos((short)card.card_id, (short)(num + 1), cmd_pos + m_obj_pos);
-                err += mc.GT_GetCaptureStatus((short)card.card_id, (short)(num + 1), out cap_home_ret, out capture_pos, 1, out m_parm);
-                err += mc.GT_SetVel((short)card.card_id, (short)(num + 1), home_spd * pul_per_mm / 1000);
-                err += mc.GT_Update((short)card.card_id, (1 << num));
-                m_home_time = 0;
-                do
-                {
-                    err += mc.GT_GetCaptureStatus((short)card.card_id, (short)(num + 1), out cap_home_ret, out capture_pos, 1, out m_parm);
-                    Thread.Sleep(1);
-                    err += mc.GT_GetPrfPos((short)card.card_id, (short)(num + 1), out  m_pref_pos, 1, out m_test);
-                    m_home_time++;
-                    if ((err != 0) || (m_home_time > 90000))
-                    {
-                        home_status = HOME_STA.ERROR;
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}未找到原点,0x{1:X8}", disc, res));
-                        m_home_time = 0;
-                        return res = EM_RES.ERR;
-                    }
-                    if (isStop)
-                    {
-                        break;
-                    }
-              
-                }
-                while (0 == cap_home_ret);
-                if (isStop)
-                {
-                    if (m_obj_pos == 999999)
-                    {
-                        m_obj_pos = -999999;
-                        err += mc.GT_SetCaptureSense((short)card.card_id, (short)(num + 1), mc.CAPTURE_HOME, 1);
-                    }
-                    else
-                    {
-                        m_obj_pos = 999999;
-                        err += mc.GT_SetCaptureSense((short)card.card_id, (short)(num + 1), mc.CAPTURE_HOME, 0);
-                    }
-                    err += mc.GT_ClrSts((short)card.card_id, (short)(num + 1), 1);
-                    err += mc.GT_SetCaptureMode((short)card.card_id, (short)(num + 1), mc.CAPTURE_HOME);
-                    err += mc.GT_SetPos((short)card.card_id, (short)(num + 1), cmd_pos + m_obj_pos);
-                    err += mc.GT_GetCaptureStatus((short)card.card_id, (short)(num + 1), out cap_home_ret, out capture_pos, 1, out m_parm);
-                    err += mc.GT_SetVel((short)card.card_id, (short)(num + 1), home_spd * pul_per_mm / 1000);
-                    err += mc.GT_Update((short)card.card_id, (1 << num));
-                    m_home_time = 0;
-                    do
-                    {
-                        err += mc.GT_GetCaptureStatus((short)card.card_id, (short)(num + 1), out cap_home_ret, out capture_pos, 1, out m_parm);
-                        Thread.Sleep(1);
-                        err += mc.GT_GetPrfPos((short)card.card_id, (short)(num + 1), out  m_pref_pos, 1, out m_test);
-                        m_home_time++;
-                        if (isStop || (err != 0) || (m_home_time > 90000))
-                        {
-                            home_status = HOME_STA.ERROR;
-                            VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}未找到原点,0x{1:X8}", disc, res));
-                            m_home_time = 0;
-                            return res = EM_RES.ERR;
-                        }
-                    }
-                    while (0 == cap_home_ret);
-                }
-
-                if (mt_type == MT_TYPE.SEVER)
-                {
-                    err += mc.GT_SetPos((short)card.card_id, (short)(num + 1), capture_pos + (int)(1 * pul_per_mm));
-                }
-                else
-                {
-                    err += mc.GT_SetPos((short)card.card_id, (short)(num + 1), (int)m_pref_pos + (int)(1 * pul_per_mm));
-                }
-                err += mc.GT_Update((short)card.card_id, (1 << num));
-                m_home_time = 0;
-                do
-                {
-                    Thread.Sleep(30);
-                    m_home_time++;
-                    if (m_home_time > 2000)
-                    { 
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}等待停止超时,0x{1:X8}", disc, res));
-                        m_home_time = 0;
-                        return res = EM_RES.ERR;
-                    }
-                }
-                while(!isStop);
-                
-                
-                //伺服index捕捉
-                if (mt_type == MT_TYPE.SEVER)
-                {
-                    err += mc.GT_SetCaptureSense((short)card.card_id, (short)(num + 1), mc.CAPTURE_INDEX, 0);
-                    m_obj_pos = 9999;
-                    err += mc.GT_ClrSts((short)card.card_id, (short)(num + 1), 1);
-                    err += mc.GT_SetCaptureMode((short)card.card_id, (short)(num + 1), mc.CAPTURE_INDEX);
-                    err += mc.GT_SetPos((short)card.card_id, (short)(num + 1), cmd_pos + (int)(m_obj_pos * pul_per_mm));
-                    err += mc.GT_SetVel((short)card.card_id, (short)(num + 1), home_spd * pul_per_mm / 1000);
-                    err += mc.GT_Update((short)card.card_id, (1 << num));
-                    m_home_time = 0;
-                    do
-                    {
-                        err += mc.GT_GetCaptureStatus((short)card.card_id, (short)(num + 1), out cap_home_ret, out capture_pos, 1, out m_parm);
-                        Thread.Sleep(1);
-                        err += mc.GT_GetPrfPos((short)card.card_id, (short)(num + 1), out m_pref_pos, 1, out m_test);
-                        m_home_time++;
-                        if ((err != 0) || (m_home_time > 90000))
-                        {
-                            VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 未找到原点,0x{1:X8}", disc, res));
-                            home_status = HOME_STA.ERROR;
-                            m_home_time = 0;
-                            return res = EM_RES.ERR;
-                        }
-                        if (isStop)
-                        {
-                            break;
-                        }
-                    }
-                    while (0 == cap_home_ret);
-                    if (isStop)
-                    {
-                        err += mc.GT_SetCaptureSense((short)card.card_id, (short)(num + 1), mc.CAPTURE_INDEX, 0);
-                        m_obj_pos = -9999;
-                        err += mc.GT_ClrSts((short)card.card_id, (short)(num + 1), 1);
-                        err += mc.GT_SetCaptureMode((short)card.card_id, (short)(num + 1), mc.CAPTURE_INDEX);
-                        err += mc.GT_SetPos((short)card.card_id, (short)(num + 1), cmd_pos + (int)(m_obj_pos * pul_per_mm));
-                        err += mc.GT_SetVel((short)card.card_id, (short)(num + 1), home_spd * pul_per_mm / 1000);
-                        err += mc.GT_Update((short)card.card_id, (1 << num));
-                        m_home_time = 0;
-                        do
-                        {
-                            err += mc.GT_GetCaptureStatus((short)card.card_id, (short)(num + 1), out cap_home_ret, out capture_pos, 1, out m_parm);
-                            Thread.Sleep(1);
-                            err += mc.GT_GetPrfPos((short)card.card_id, (short)(num + 1), out m_pref_pos, 1, out m_test);
-                            m_home_time++;
-                            if (isStop || (err != 0) || (m_home_time > 90000))
-                            {
-                                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}未找到原点,0x{1:X8}", disc, res));
-                                home_status = HOME_STA.ERROR;
-                                m_home_time = 0;
-                                return res = EM_RES.ERR;
-                            }
-                        }
-                        while (0 == cap_home_ret);
-
-                    }
-                    err += mc.GT_SetPos((short)card.card_id, (short)(num + 1), capture_pos + (int)(1 * pul_per_mm));
-                    err += mc.GT_Update((short)card.card_id, (1 << num));
-                    m_home_time = 0;
-                    do
-                    {
-                        Thread.Sleep(30);
-                        m_home_time++;
-                        if (m_home_time > 2000)
-                        {
-                            VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}等待停止超时,0x{1:X8}", disc, res));
-                            m_home_time = 0;
-                            return res = EM_RES.ERR;
-                        }
-                    }
-                    while (!isStop);
-                }
-                if (err != 0)
-                {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}回零设置出错,0x{1:X8}", disc, res));
-                    home_status = HOME_STA.ERROR;
-                    return res = EM_RES.ERR;
-                }
-                if (cap_home_ret != 0)
-                {
-                    return res = EM_RES.OK;
-                }
-
-
-            }
-
-#endif
-
 #if ZMOTION
-
             if (card.brand == CARD.BRAND.ZMOTION)
             {
                 err = zmcaux.ZAux_Direct_Singl_Datum(card.handle, num, mode);
                 if (err != 0)
                 {
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}回零出错,0x{1:X8}", disc, res));
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}回零出错,0x{1:X8}", disc, err));
+                    home_status = HOME_STA.ERROR;
+                    return res = EM_RES.ERR;
+                }
+                Thread.Sleep(100);
+            }
+#endif
+#if ORIENTALMOTOR
+            else if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+            {
+                if(true != AzdMotor.Home(ref bquit,timeout_ms))
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}回零出错", disc));
                     home_status = HOME_STA.ERROR;
                     return res = EM_RES.ERR;
                 }
@@ -3458,7 +2972,7 @@ namespace MotionCtrl
             {
                 //res = WaitForStop(ref bquit,timeout_ms, bdoevent);
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.DBG, string.Format("{0} WaitHomeStop...", disc));
-                res = WaitHomeStop(ref bquit, timeout_ms);
+                res = WaitHomeStop(ref bquit,timeout_ms);
                 if (res != EM_RES.OK)
                 {
                     home_status = HOME_STA.ERROR;
@@ -3467,32 +2981,27 @@ namespace MotionCtrl
 
                 //enable soflt limit
                 res = EnSlm(true);
-                if (res != EM_RES.OK)
-                    home_status = HOME_STA.ERROR;
+                if (res != EM_RES.OK) home_status = HOME_STA.ERROR;
             }
-
+ 
             return res;
         }
 
-
         EM_RES home_task_ret;
         bool bend = false;
-        public bool bhomequit = false;
-
-
+        public bool bhomequit=false;
         void task()
         {
             int err;
             double spd_temp = spd_start;
-            spd_start = home_spd / 3;
-
+            spd_start = home_spd/3;
+            
             bend = false;
             home_status = HOME_STA.HOMING;
             try
             {
                 home_task_ret = ChkParam();
-                if (home_task_ret != EM_RES.OK) 
-                    return;
+                if (home_task_ret != EM_RES.OK) return;
 
 #if LEADSHINE
                 if (card.brand == CARD.BRAND.LEADSHINE)
@@ -3596,151 +3105,6 @@ namespace MotionCtrl
                     }
                 }
 #endif
-#if GOOGOLTECH
-                if (card.brand == CARD.BRAND.GOOGOLTECH)
-                {
-                    
-                    home_task_ret = SetSpeed(home_spd);
-                    if (home_task_ret != EM_RES.OK) return;
-                    //脱离限位
-
-                    if (isELP)
-                    {
-                        err = mc.GT_SetPos((short)card.card_id, (short)(num + 1), (int)(cmd_pos - 990000));
-                        err = mc.GT_Update((short)card.card_id, 1 << num);
-                        if (err != 0)
-                        {
-                            home_task_ret = EM_RES.ERR;
-                            return;
-                        }
-                        //wait
-                        for (int i = 0; i < 20; i++)
-                        {
-                            Thread.Sleep(100);
-                            if (!isELP)
-                            {
-                                Thread.Sleep(10);
-                                if (!isELP)
-                                    break;
-                            }
-                        }
-                        Stop();
-                        WaitForStop(ref bhomequit, 10000);
-                        //try home
-                        spd_start = spd_temp;
-                        home_task_ret = Home(ref bhomequit, home_spd, home_mode, AX_DIR.N, 20000);
-                        Stop();
-                        if (home_task_ret == EM_RES.OK)
-                        {
-                            home_task_ret = HomeOffset(ref bhomequit);
-                            Thread.Sleep(300);                           
-                        }
-                        return;
-                    }
-                    //脱离限位
-                    if (isELN)
-                    {
-                        //set spd
-                        home_task_ret = SetSpeed(home_spd);
-                        if (home_task_ret != EM_RES.OK) return;
-                        //move
-                        err = mc.GT_SetPos((short)card.card_id, (short)(num+1), (int)(cmd_pos + 999999));
-                        err = mc.GT_Update((short)card.card_id, 1 << num);
-                        if (err != 0)
-                        {
-                            home_task_ret = EM_RES.ERR;
-                            return;
-                        }
-                        //wait
-                        for (int i = 0; i < 20; i++)
-                        {
-                            Thread.Sleep(100);
-                            if (!isELN)
-                            {
-                                Thread.Sleep(10);
-                                if (!isELN)
-                                    break;
-                            }
-                        }
-                        Stop();
-                        WaitForStop(ref bhomequit, 10000);
-                        //try home
-                        spd_start = spd_temp;
-                        home_task_ret = Home(ref bhomequit, home_spd, home_mode, AX_DIR.P, 20000);
-                        Stop();
-                        if (home_task_ret == EM_RES.OK)
-                        {
-                            home_task_ret = HomeOffset(ref bhomequit);
-                            Thread.Sleep(300);                            
-                        }
-                        return;
-                    }
-
-                    ////如果感应到原点先快速脱离
-
-                    if (home_mode != 4 && isORG)//  home_mode==4是无正负限位的模式
-                    {
-                        //home_task_ret = Home(ref bhomequit, home_spd / 3, 1, home_dir, 3000);
-                        //Stop();
-                        //if (home_task_ret != EM_RES.OK) return;
-                        home_task_ret = SetSpeed(home_spd);
-                        if (home_task_ret != EM_RES.OK) return;
-                        //move
-                        err = mc.GT_SetPos((short)card.card_id, (short)(num+1), (int)(cmd_pos + 999999));
-                        err = mc.GT_Update((short)card.card_id, 1<<num);
-                        if (err != 0)
-                        {
-                            home_task_ret = EM_RES.ERR;
-                            return;
-                        }
-                        //wait
-                        for (int i = 0; i < 2000; i++)
-                        {
-                            Thread.Sleep(100);
-                            if (!isORG)
-                            {
-                                Thread.Sleep(300);
-                                if (!isORG)
-                                    break;
-                            }
-                            Thread.Sleep(100);
-                            if (isStop)
-                            {                               
-                                home_task_ret = EM_RES.ERR;
-                                return;
-                            }
-                        }
-                        Stop();
-                        WaitForStop(ref bhomequit, 10000);
-                        //try home
-                        spd_start = spd_temp;
-                        
-                        home_task_ret = Home(ref bhomequit, home_spd, home_mode, AX_DIR.N, 20000);
-                        Stop();
-                        if (home_task_ret == EM_RES.OK)
-                        {
-                            home_task_ret = HomeOffset(ref bhomequit);
-                            Thread.Sleep(300);                           
-                        }
-                        return;
-                        
-                    }
-
-                    //try home
-                    spd_start = spd_temp;
-                    home_task_ret = Home(ref bhomequit, home_spd, home_mode, home_dir, 20000);
-                    Stop();
-                    if (home_task_ret == EM_RES.OK)
-                    {
-                        home_task_ret = HomeOffset(ref bhomequit);
-                        Thread.Sleep(300);
-                       
-                    }
-                    return;
-
-              
-                }
-#endif
                 //正式回零
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.DBG, string.Format("{0} home...", disc));
                 spd_start = spd_temp;
@@ -3749,18 +3113,19 @@ namespace MotionCtrl
                 if (home_task_ret != EM_RES.OK) return;
 
                 //再次回零
-                //VAR.msg.AddMsg(Msg.EM_MSGTYPE.DBG, string.Format("{0} rehome...", disc));
-                //home_task_ret = Home(ref bhomequit, home_spd, home_mode, home_dir, 5000);
-                //Stop();
-                //if (home_task_ret != EM_RES.OK) return;
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.DBG, string.Format("{0} rehome...", disc));
+                home_task_ret = Home(ref bhomequit, home_spd, home_mode, home_dir, 5000);
+                Stop();
+                if (home_task_ret != EM_RES.OK) return;
+
                 //offset
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.DBG, string.Format("{0} home offset...", disc));
                 home_task_ret = HomeOffset(ref bhomequit);
             }
             finally
             {
+                Stop();
                 //恢复
-                Thread.Sleep(300);
                 SetToWorkSpd();
                 spd_start = spd_temp;
                 //result
@@ -3778,10 +3143,15 @@ namespace MotionCtrl
             try
             {
                 //正式回零
-                home_task_ret = Home(ref bhomequit, home_spd, home_mode, home_dir, 20000);
+                home_task_ret = Home(ref bhomequit, home_spd, home_mode, home_dir, home_timeout);
                 Stop();
-                if (home_task_ret != EM_RES.OK) return;
+                if (home_task_ret != EM_RES.OK)
+                    return;
                 home_task_ret = HomeOffset(ref bhomequit);
+            }
+            catch(Exception ex)
+            {
+                string str = ex.Message;
             }
             finally
             {
@@ -3794,25 +3164,28 @@ namespace MotionCtrl
         Task _th_home = null;
         public EM_RES HomeTask(int timeout = int.MaxValue, double offset = double.MaxValue, bool bsimplemode = false)
         {
+#if ORIENTALMOTOR
+            if (card.brand == CARD.BRAND.ORIENTALMOTOR)
+            {
+                bsimplemode = true;
+            }
+#endif
             home_task_ret = EM_RES.OK;
             if (offset != double.MaxValue) home_offset = offset;
             if (timeout != int.MaxValue) home_timeout = timeout;
             else home_timeout = -1;
             bend = false;
-            if (bsimplemode)
-                _th_home = new Task(task2);
-            else
-                _th_home = new Task(task);
+            if (bsimplemode) _th_home = new Task(task2);
+            else _th_home = new Task(task);
             bhomequit = false;
             _th_home.Start();
-            return 
-                home_task_ret;
+            return home_task_ret;
         }
         public bool HomeTaskisEnd
         {
-            get
+            get 
             {
-                return bend;
+                return bend || _th_home.IsCompleted;
             }
         }
         public EM_RES HomeTaskRet

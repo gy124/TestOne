@@ -1,0 +1,14 @@
+diff a/MotionCtrl/AxisConfig.Designer.cs b/MotionCtrl/AxisConfig.Designer.cs	(rejected hunks)
+@@ -239,11 +239,7 @@
+             this.dgv.ShowEditingIcon = false;
+             this.dgv.Size = new System.Drawing.Size(1078, 347);
+             this.dgv.TabIndex = 0;
+-            // 
+-            // tmr_update
+-            // 
+-            this.tmr_update.Interval = 300;
+-            this.tmr_update.Tick += new System.EventHandler(this.tmr_update_Tick);
++            this.dgv.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.dgv_CellPainting);
+             // 
+             // axis
+             // 

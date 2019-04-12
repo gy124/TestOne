@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.pnl_log = new System.Windows.Forms.Panel();
+            this.lb_grade_inf = new System.Windows.Forms.Label();
             this.btn_manager = new System.Windows.Forms.Button();
             this.lb_log_inf = new System.Windows.Forms.Label();
             this.tb_pw = new System.Windows.Forms.TextBox();
@@ -53,6 +54,7 @@
             // 
             // pnl_log
             // 
+            this.pnl_log.Controls.Add(this.lb_grade_inf);
             this.pnl_log.Controls.Add(this.btn_manager);
             this.pnl_log.Controls.Add(this.lb_log_inf);
             this.pnl_log.Controls.Add(this.tb_pw);
@@ -63,8 +65,18 @@
             this.pnl_log.Controls.Add(this.btn_login);
             this.pnl_log.Location = new System.Drawing.Point(3, 3);
             this.pnl_log.Name = "pnl_log";
-            this.pnl_log.Size = new System.Drawing.Size(304, 307);
+            this.pnl_log.Size = new System.Drawing.Size(304, 351);
             this.pnl_log.TabIndex = 1;
+            // 
+            // lb_grade_inf
+            // 
+            this.lb_grade_inf.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.lb_grade_inf.Location = new System.Drawing.Point(21, 300);
+            this.lb_grade_inf.Name = "lb_grade_inf";
+            this.lb_grade_inf.Size = new System.Drawing.Size(267, 24);
+            this.lb_grade_inf.TabIndex = 148;
+            this.lb_grade_inf.Text = "用户级别为：管理员";
+            this.lb_grade_inf.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // btn_manager
             // 
@@ -80,13 +92,13 @@
             // 
             // lb_log_inf
             // 
-            this.lb_log_inf.AutoSize = true;
             this.lb_log_inf.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.lb_log_inf.Location = new System.Drawing.Point(24, 274);
+            this.lb_log_inf.Location = new System.Drawing.Point(6, 270);
             this.lb_log_inf.Name = "lb_log_inf";
-            this.lb_log_inf.Size = new System.Drawing.Size(267, 24);
+            this.lb_log_inf.Size = new System.Drawing.Size(292, 24);
             this.lb_log_inf.TabIndex = 146;
-            this.lb_log_inf.Text = "登陆成功，当前用户为 管理员!";
+            this.lb_log_inf.Text = "管理员登录成功!";
+            this.lb_log_inf.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // tb_pw
             // 
@@ -145,6 +157,7 @@
             this.btn_logout.TabIndex = 143;
             this.btn_logout.Text = "注销";
             this.btn_logout.UseVisualStyleBackColor = false;
+            this.btn_logout.Click += new System.EventHandler(this.btn_logout_Click);
             // 
             // btn_login
             // 
@@ -156,6 +169,7 @@
             this.btn_login.TabIndex = 142;
             this.btn_login.Text = "登录";
             this.btn_login.UseVisualStyleBackColor = false;
+            this.btn_login.Click += new System.EventHandler(this.btn_login_Click);
             // 
             // pnl_manager
             // 
@@ -164,16 +178,16 @@
             this.pnl_manager.Controls.Add(this.btn_add);
             this.pnl_manager.Controls.Add(this.dgv);
             this.pnl_manager.Location = new System.Drawing.Point(310, 3);
-            this.pnl_manager.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.pnl_manager.Margin = new System.Windows.Forms.Padding(2);
             this.pnl_manager.Name = "pnl_manager";
-            this.pnl_manager.Size = new System.Drawing.Size(349, 307);
+            this.pnl_manager.Size = new System.Drawing.Size(350, 351);
             this.pnl_manager.TabIndex = 2;
             // 
             // btn_save
             // 
             this.btn_save.BackColor = System.Drawing.SystemColors.ButtonFace;
             this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.btn_save.Location = new System.Drawing.Point(236, 265);
+            this.btn_save.Location = new System.Drawing.Point(237, 286);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(110, 42);
             this.btn_save.TabIndex = 145;
@@ -185,23 +199,25 @@
             // 
             this.btn_dele.BackColor = System.Drawing.SystemColors.ButtonFace;
             this.btn_dele.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.btn_dele.Location = new System.Drawing.Point(119, 265);
+            this.btn_dele.Location = new System.Drawing.Point(120, 285);
             this.btn_dele.Name = "btn_dele";
             this.btn_dele.Size = new System.Drawing.Size(110, 42);
             this.btn_dele.TabIndex = 144;
             this.btn_dele.Text = "删除";
             this.btn_dele.UseVisualStyleBackColor = false;
+            this.btn_dele.Click += new System.EventHandler(this.btn_dele_Click);
             // 
             // btn_add
             // 
             this.btn_add.BackColor = System.Drawing.SystemColors.ButtonFace;
             this.btn_add.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.btn_add.Location = new System.Drawing.Point(3, 265);
+            this.btn_add.Location = new System.Drawing.Point(4, 286);
             this.btn_add.Name = "btn_add";
             this.btn_add.Size = new System.Drawing.Size(110, 42);
             this.btn_add.TabIndex = 143;
             this.btn_add.Text = "增加";
             this.btn_add.UseVisualStyleBackColor = false;
+            this.btn_add.Click += new System.EventHandler(this.btn_add_Click);
             // 
             // dgv
             // 
@@ -210,21 +226,21 @@
             this.dgv.AllowUserToResizeColumns = false;
             this.dgv.AllowUserToResizeRows = false;
             this.dgv.BackgroundColor = System.Drawing.SystemColors.Control;
-            this.dgv.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgv.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             this.dgv.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.num,
             this.name,
             this.password,
             this.pms});
             this.dgv.EnableHeadersVisualStyles = false;
-            this.dgv.Location = new System.Drawing.Point(3, 13);
-            this.dgv.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.dgv.Location = new System.Drawing.Point(2, 13);
+            this.dgv.Margin = new System.Windows.Forms.Padding(2);
             this.dgv.MultiSelect = false;
             this.dgv.Name = "dgv";
             this.dgv.RowHeadersVisible = false;
             this.dgv.RowTemplate.Height = 27;
             this.dgv.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgv.Size = new System.Drawing.Size(343, 247);
+            this.dgv.Size = new System.Drawing.Size(345, 265);
             this.dgv.TabIndex = 0;
             this.dgv.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_CellClick);
             this.dgv.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.dgv_CellFormatting);
@@ -274,9 +290,9 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.pnl_manager);
             this.Controls.Add(this.pnl_log);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "User";
-            this.Size = new System.Drawing.Size(659, 317);
+            this.Size = new System.Drawing.Size(662, 357);
             this.Load += new System.EventHandler(this.User_Load);
             this.pnl_log.ResumeLayout(false);
             this.pnl_log.PerformLayout();
@@ -290,7 +306,6 @@
 
         private System.Windows.Forms.Panel pnl_log;
         private System.Windows.Forms.Label lb_log_inf;
-        private System.Windows.Forms.TextBox tb_pw;
         public System.Windows.Forms.ComboBox cb_user;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
@@ -306,5 +321,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn name;
         private System.Windows.Forms.DataGridViewTextBoxColumn password;
         private System.Windows.Forms.DataGridViewComboBoxColumn pms;
+        private System.Windows.Forms.Label lb_grade_inf;
+        public System.Windows.Forms.TextBox tb_pw;
     }
 }

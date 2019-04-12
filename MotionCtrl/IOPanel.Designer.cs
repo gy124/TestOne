@@ -92,7 +92,6 @@ namespace MotionCtrl
             this.lbl_on.TabIndex = 9;
             this.lbl_on.Text = "on";
             this.lbl_on.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.lbl_on.Click += new System.EventHandler(this.lbl_on_Click);
             // 
             // btn_m
             // 

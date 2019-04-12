@@ -107,10 +107,5 @@ namespace MotionCtrl
                 lbl_on.BackColor = (gpio_out.isON ? mOUT_Color : Color.Silver);
             }
         }
-
-        private void lbl_on_Click(object sender, EventArgs e)
-        {
-
-        }
     }
 }

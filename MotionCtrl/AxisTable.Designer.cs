@@ -58,7 +58,6 @@ namespace MotionCtrl
             this.layer_offset_z = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.layer_offset_a = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dgv = new System.Windows.Forms.DataGridView();
-            this.tmr_update = new System.Windows.Forms.Timer(this.components);
             this.axis = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.status = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.cmd_pos = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -76,6 +75,7 @@ namespace MotionCtrl
             this.btn_n = new System.Windows.Forms.DataGridViewButtonColumn();
             this.btn_p = new System.Windows.Forms.DataGridViewButtonColumn();
             this.btn_home = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.tmr_update = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.dgv)).BeginInit();
             this.SuspendLayout();
             // 
@@ -252,11 +252,7 @@ namespace MotionCtrl
             this.dgv.Size = new System.Drawing.Size(1078, 347);
             this.dgv.TabIndex = 0;
             this.dgv.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_CellContentClick);
-            // 
-            // tmr_update
-            // 
-            this.tmr_update.Interval = 300;
-            this.tmr_update.Tick += new System.EventHandler(this.tmr_update_Tick);
+            this.dgv.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.dgv_CellPainting);
             // 
             // axis
             // 
@@ -304,7 +300,7 @@ namespace MotionCtrl
             // 
             // eln
             // 
-            this.eln.HeaderText = "EL+";
+            this.eln.HeaderText = "EL-";
             this.eln.Name = "eln";
             this.eln.ReadOnly = true;
             this.eln.Resizable = System.Windows.Forms.DataGridViewTriState.False;
@@ -312,7 +308,7 @@ namespace MotionCtrl
             // 
             // elp
             // 
-            this.elp.HeaderText = "EL-";
+            this.elp.HeaderText = "EL+";
             this.elp.Name = "elp";
             this.elp.ReadOnly = true;
             this.elp.Resizable = System.Windows.Forms.DataGridViewTriState.False;
@@ -442,6 +438,11 @@ namespace MotionCtrl
             this.btn_home.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.btn_home.Text = "回零";
             this.btn_home.UseColumnTextForButtonValue = true;
+            // 
+            // tmr_update
+            // 
+            this.tmr_update.Interval = 300;
+            this.tmr_update.Tick += new System.EventHandler(this.tmr_update_Tick);
             // 
             // AxisTable
             // 

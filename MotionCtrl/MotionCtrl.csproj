@@ -17,8 +17,8 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;LEADSHINE,ZMOTION,GOOGOLTECH</DefineConstants>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;LEADSHINE,ZMOTION,ORIENTALMOTOR</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
@@ -26,16 +26,16 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE;LEADSHINE,ZMOTION,ORIENTALMOTOR</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;LEADSHINE,ZMOTION,GOOGOLTECH</DefineConstants>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;LEADSHINE,ZMOTION,ORIENTALMOTOR</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
@@ -44,8 +44,8 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
-    <OutputPath>bin\x86\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE;LEADSHINE,ZMOTION,ORIENTALMOTOR</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x86</PlatformTarget>
@@ -55,16 +55,16 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;LEADSHINE,ZMOTION,ORIENTALMOTOR</DefineConstants>
     <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutputPath>bin\x64\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;LEADSHINE,ZMOTION,ORIENTALMOTOR</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
@@ -72,6 +72,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NModbus4">
+      <HintPath>dll\NModbus4.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -83,13 +86,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Component1.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Component1.Designer.cs">
-      <DependentUpon>Component1.cs</DependentUpon>
-    </Compile>
-    <Compile Include="gts.cs" />
     <Compile Include="IOTable.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -131,12 +127,6 @@
     <Compile Include="IOPanel.Designer.cs">
       <DependentUpon>IOPanel.cs</DependentUpon>
     </Compile>
-    <Compile Include="Log_grid.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Log_grid.Designer.cs">
-      <DependentUpon>Log_grid.cs</DependentUpon>
-    </Compile>
     <Compile Include="LTDMC.cs" />
     <Compile Include="MSG.cs" />
     <Compile Include="MyType.cs" />
@@ -146,7 +136,7 @@
     <Compile Include="pad.Designer.cs">
       <DependentUpon>pad.cs</DependentUpon>
     </Compile>
-    <Compile Include="POS.cs" />
+    <Compile Include="ADZMotor.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -157,36 +147,6 @@
     </Compile>
     <Compile Include="User.Designer.cs">
       <DependentUpon>User.cs</DependentUpon>
-    </Compile>
-    <Compile Include="PosTable.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="PosTable.Designer.cs">
-      <DependentUpon>PosTable.cs</DependentUpon>
-    </Compile>
-    <Compile Include="AXIS_Panle.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="AXIS_Panle.Designer.cs">
-      <DependentUpon>AXIS_Panle.cs</DependentUpon>
-    </Compile>
-    <Compile Include="pos_table_mini.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="pos_table_mini.Designer.cs">
-      <DependentUpon>pos_table_mini.cs</DependentUpon>
-    </Compile>
-    <Compile Include="IO_table_mini.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="IO_table_mini.Designer.cs">
-      <DependentUpon>IO_table_mini.cs</DependentUpon>
-    </Compile>
-    <Compile Include="cyl_table_mini.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="cyl_table_mini.Designer.cs">
-      <DependentUpon>cyl_table_mini.cs</DependentUpon>
     </Compile>
     <Compile Include="Utility.cs" />
     <Compile Include="VAR.cs" />
@@ -219,12 +179,6 @@
     <EmbeddedResource Include="IOPanel.resx">
       <DependentUpon>IOPanel.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="IO_table_mini.resx">
-      <DependentUpon>IO_table_mini.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Log_grid.resx">
-      <DependentUpon>Log_grid.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="pad.resx">
       <DependentUpon>pad.cs</DependentUpon>
     </EmbeddedResource>
@@ -234,18 +188,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="User.resx">
       <DependentUpon>User.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="PosTable.resx">
-      <DependentUpon>PosTable.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="AXIS_Panle.resx">
-      <DependentUpon>AXIS_Panle.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="pos_table_mini.resx">
-      <DependentUpon>pos_table_mini.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="cyl_table_mini.resx">
-      <DependentUpon>cyl_table_mini.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="XYZU.resx">
       <DependentUpon>XYZU.cs</DependentUpon>

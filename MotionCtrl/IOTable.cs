@@ -13,9 +13,12 @@ namespace MotionCtrl
 {
     public partial class IOTable : UserControl
     {
+        public int UpdateCt;
         List<GPIO> list_IO=new List<GPIO> ();
         Color cl_out_on = Color.Lime;
         Color cl_in_on = Color.Orange;
+        private static readonly Object LockObj = new object();
+        int showcfg = 0;
         public IOTable()
         {
             InitializeComponent();
@@ -30,11 +33,10 @@ namespace MotionCtrl
             if (dgv.Rows.Count == 0 || row < 0 || row >= dgv.Rows.Count) row = dgv.Rows.Add();
             //the last row
             else if (row < 0) row = dgv.Rows.Count - 1;
-
             dgv.Rows[row].Cells[0].Value = io.str_disc;
-            dgv.Rows[row].Cells[1].Value = io.isON ? "ON" : "OFF";
+            dgv.Rows[row].Cells[1].Value = io._isON ? "ON" : "OFF";
             dgv.Rows[row].Cells[2].Value = io.dir == GPIO.IO_DIR.IN ? "IN" : "OUT";
-            dgv.Rows[row].Cells[3].Value = io.card.disc;
+            dgv.Rows[row].Cells[3].Value = io.axis != null ? io.axis.disc : io.card.disc;
             dgv.Rows[row].Cells[4].Value = io.num;
         }
 
@@ -83,8 +85,45 @@ namespace MotionCtrl
             }
         }
 
+        bool btsk = false;
+
+        Task TskUpdateIO = null;
+        void UpdateIO()
+        {
+            while (showcfg >= 0)
+            {
+                btsk = true;
+                try
+                {
+                    btsk = true;
+                    int t = Environment.TickCount;
+                    //缓存，避免修改list_io时冲突
+                    List<GPIO> list_temp = new List<GPIO>();
+                    foreach (GPIO io in list_IO) list_temp.Add(io);
+                    foreach (GPIO io in list_temp)
+                    {
+                        if (showcfg == 0 && io.dir!= GPIO.IO_DIR.OUT)continue;
+                        if (showcfg == 1 && io.dir!= GPIO.IO_DIR.IN)continue;                        
+                        io._isON = io.isON;
+                    }
+                    UpdateCt = Environment.TickCount - t;
+                    Thread.Sleep(10);
+                }
+                catch(Exception ex)
+                {
+                    
+                }
+            }
+            btsk = false;
+        }
         public void UpdateShow()
         {
+            if (TskUpdateIO == null|| TskUpdateIO.IsCompleted)
+            {
+                TskUpdateIO = new Task(UpdateIO);
+                TskUpdateIO.Start();
+            }
+
             if (dgv.Rows.Count != list_IO.Count) dgv.Rows.Clear();
             for (int r = 0; r < list_IO.Count; r++)
             {
@@ -103,8 +142,10 @@ namespace MotionCtrl
         /// <param name="cfg">0：只显示OUT,1:只显示IN, 2：显示所有</param>
         public void ShowCfg(int cfg = 0)
         {
+            showcfg = cfg;
             if(cfg == 0)
             {
+                dgv.Columns[2].Visible = false;
                 dgv.Columns[5].Visible = true;
                 dgv.Columns[6].Visible = true;
                 foreach (DataGridViewRow row in dgv.Rows)
@@ -115,6 +156,7 @@ namespace MotionCtrl
             }
             else if (cfg == 1)
             {
+                dgv.Columns[2].Visible = false;
                 dgv.Columns[5].Visible = false;
                 dgv.Columns[6].Visible = false;
                 foreach (DataGridViewRow row in dgv.Rows)
@@ -125,6 +167,7 @@ namespace MotionCtrl
             }
             else if (cfg == 2)
             {
+                dgv.Columns[2].Visible = true;
                 dgv.Columns[5].Visible = true;
                 dgv.Columns[6].Visible = true;
                 foreach (DataGridViewRow row in dgv.Rows)
@@ -148,20 +191,19 @@ namespace MotionCtrl
             if (e.ColumnIndex == 5)
             {
                 ret = list_IO.ElementAt(e.RowIndex).SetOn();
-                if (ret != EM_RES.OK) 
-                MessageBox.Show(list_IO.ElementAt(e.RowIndex).disc + "打开异常!Err:" + ret.ToString());  
+                if (ret != EM_RES.OK) MessageBox.Show(list_IO.ElementAt(e.RowIndex).disc + "打开异常!Err:" + ret.ToString());
             }
             //关闭
             else if (e.ColumnIndex == 6)
             {
                 ret = list_IO.ElementAt(e.RowIndex).SetOff();
-                if (ret != EM_RES.OK) 
-                MessageBox.Show(list_IO.ElementAt(e.RowIndex).disc + "关闭异常!Err:" + ret.ToString());             
+                if (ret != EM_RES.OK) MessageBox.Show(list_IO.ElementAt(e.RowIndex).disc + "关闭异常!Err:" + ret.ToString());
             }
         }
 
         private void dgv_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
+            if (e.RowIndex < 0) return;
             if (e.ColumnIndex == 1)
             {
                 if (e.Value.ToString() == "ON")
@@ -169,6 +211,11 @@ namespace MotionCtrl
                     if (list_IO.ElementAt(e.RowIndex).dir == GPIO.IO_DIR.OUT) e.CellStyle.BackColor = cl_out_on;
                     else e.CellStyle.BackColor = cl_in_on;
                 }
+                else if ((e.RowIndex & 1) == 1) e.CellStyle.BackColor = Color.WhiteSmoke;
+            }
+            else if ((e.RowIndex & 1) == 1)
+            {
+                e.CellStyle.BackColor = Color.WhiteSmoke;
             }
         }
     }

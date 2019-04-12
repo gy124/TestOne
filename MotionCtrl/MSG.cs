@@ -12,9 +12,6 @@ namespace MotionCtrl
 {
     public class Msg
     {
-        /// <summary>
-        /// 显示信息类型  错误/警告/运行/
-        /// </summary>
         public enum EM_MSGTYPE
         {
             ERR = 0x01,
@@ -43,22 +40,18 @@ namespace MotionCtrl
         FileStream Log;
         string str_date;
         private static readonly Object LockObj = new object();
-        /// <summary>
-        /// 信息显示列表
-        /// </summary>
         LinkedList<MsgData> list_msgdat = new LinkedList<MsgData>();
         object displayer;
 
         public EM_MSGTYPE MsgCfg = (EM_MSGTYPE)0xFFFF;
         //public StringBuilder gMsgStrList = new StringBuilder();
         public int MsgMaxLine = 200;
-        /// <summary>
-        /// 系统时间
-        /// </summary>
+
         public System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
         System.Timers.Timer timer;
+
         #region 初始化
-        public Msg(int MaxLine = 500, EM_MSGTYPE Cfg = (EM_MSGTYPE)0xFFFF)
+        public Msg(int MaxLine = 200, EM_MSGTYPE Cfg = (EM_MSGTYPE)0xFFFF)
         {
             MsgCfg = Cfg;
             MsgMaxLine = MaxLine;            
@@ -68,18 +61,19 @@ namespace MotionCtrl
             sw.Start();
         }
 
-        //~Msg()
-        //{
-        //    if (Log != null)
-        //    {
-        //        Log.Close();
-        //        Log = null;
-        //    }
-        //}
+        ~Msg()
+        {
+            if (Log != null)
+            {
+                Log.Close();
+                Log = null;
+            }
+        }
         public void StartUpdate(object displayer)
         {
             if (displayer == null) return;
             this.displayer = displayer;
+
             //显示刷新
             if (timer == null)
             {
@@ -89,7 +83,13 @@ namespace MotionCtrl
                 timer.Enabled = true;
             }            
         }
-       
+
+        public void ShowMsgCfg( int MaxLine, EM_MSGTYPE Cfg)
+        {
+            MsgCfg = Cfg;
+            MsgMaxLine = MaxLine;            
+        }
+
         private void timer_Elapsed(object sender, ElapsedEventArgs e)
         {
             if (list_msgdat.Count == 0 || displayer == null) return;
@@ -143,6 +143,8 @@ namespace MotionCtrl
             }
         }
         #endregion
+
+
         #region 委托显示
         delegate void DisplayCallback(object displayer);
         public void ShowMsgCallback(object displayer)
@@ -186,17 +188,17 @@ namespace MotionCtrl
                 MsgData msg = list_msgdat.First();
                 if ((msg.msg_type & MsgCfg) != 0)
                 {
-                    tb.AppendText(msg.ToString() + "\r\n");//显示信息
+                    tb.AppendText(msg.ToString() + "\r\n");
                 }
 
                 if (((int)msg.msg_type & ((int)MsgCfg) >> 8) != 0)
                 {
-                    SaveMsg(msg.ToString());//保存信息
+                    SaveMsg(msg.ToString());
                 }
-                if (tb.Lines.Count() > MsgMaxLine / 2)//信息行数大于最大值的一半
+                if (tb.Lines.Count() > MsgMaxLine / 2)
                 {
                     List<string> str_list = tb.Lines.ToList();
-                    str_list.RemoveAt(0);//去掉第一个
+                    str_list.RemoveAt(0);
                     tb.Lines = str_list.ToArray();
                 }
 
@@ -233,7 +235,7 @@ namespace MotionCtrl
 
                 if (((int)msg.msg_type & ((int)MsgCfg) >> 8) != 0)
                 {
-                    SaveMsg(msg.ToString());//保存到log
+                    SaveMsg(msg.ToString());
                 }
                 if (rtb.Lines.Count() > MsgMaxLine / 2) rtb.Lines[0].Remove(0);
 
@@ -308,7 +310,7 @@ namespace MotionCtrl
 
                     if (((int)msg.msg_type & ((int)MsgCfg) >> 8) != 0)
                     {
-                        SaveMsg(msg.ToString());//保存到log
+                        SaveMsg(msg.ToString());
                     }
                     //if (list_msgdat.Count % 10 == 0)
                     //{
@@ -342,9 +344,9 @@ namespace MotionCtrl
             try
             {
                 //if (pLockMsg == null) pLockMsg = new Mutex(true);
-              //  pLockMsg.WaitOne();
+                //pLockMsg.WaitOne();
 
-                String str="";
+                //String HandStr, str;
                 ////show config
                 //if ((MsgType == EM_MSGTYPE.ERR) && ((MsgCfg & EM_MSGTYPE.ERR) != 0)) HandStr = "[ERR] ";
                 //else if ((MsgType == EM_MSGTYPE.WAR) && ((MsgCfg & EM_MSGTYPE.WAR) != 0)) HandStr = "[WAR] ";
@@ -355,30 +357,24 @@ namespace MotionCtrl
 
                 ////show data
                 //str = DateTime.Now.ToString("[HH:mm:ss.fff] ") + HandStr + MsgStr;
-            //   if ((MsgType == EM_MSGTYPE.ERR) && ((MsgCfg & EM_MSGTYPE.ERR) != 0)) addstr(str, true);
+                //if ((MsgType == EM_MSGTYPE.ERR) && ((MsgCfg & EM_MSGTYPE.ERR) != 0)) addstr(str, true);
                 //else if ((MsgType == EM_MSGTYPE.WAR) && ((MsgCfg & EM_MSGTYPE.WAR) != 0)) addstr(str, true);
                 //else if ((MsgType == EM_MSGTYPE.NOR) && ((MsgCfg & EM_MSGTYPE.NOR) != 0)) addstr(str);
                 //else if ((MsgType == EM_MSGTYPE.DBG) && ((MsgCfg & EM_MSGTYPE.DBG) != 0)) addstr(str);
                 //else if ((MsgType == EM_MSGTYPE.SYS) && ((MsgCfg & EM_MSGTYPE.SYS) != 0)) addstr(str);
 
-                //save
+                ////save
                 //if ((MsgType == EM_MSGTYPE.ERR) && ((MsgCfg & EM_MSGTYPE.SAVE_ERR) != 0)) SaveMsg(str);
                 //else if ((MsgType == EM_MSGTYPE.WAR) && ((MsgCfg & EM_MSGTYPE.SAVE_WAR) != 0)) SaveMsg(str);
                 //else if ((MsgType == EM_MSGTYPE.NOR) && ((MsgCfg & EM_MSGTYPE.SAVE_NOR) != 0)) SaveMsg(str);
                 //else if ((MsgType == EM_MSGTYPE.DBG) && ((MsgCfg & EM_MSGTYPE.SAVE_DBG) != 0)) SaveMsg(str);
                 //else if ((MsgType == EM_MSGTYPE.SYS) && ((MsgCfg & EM_MSGTYPE.SAVE_SYS) != 0)) SaveMsg(str);
 
-                if(MsgType == EM_MSGTYPE.ERR)
-                {
-                   // VAR.gsys_set.bquit = true;
-                }
-
-
                 MsgData msg = new MsgData();
                 msg.msg_type = MsgType;
                 msg.msg = MsgStr;
                 msg.dt = DateTime.Now;
-                lock (LockObj)//lock list单独操作锁
+                lock (LockObj)
                 {
                     list_msgdat.AddLast(msg);
                     if (list_msgdat.Count > MsgMaxLine) list_msgdat.RemoveFirst();
@@ -412,7 +408,10 @@ namespace MotionCtrl
         bool bflash;
         System.Timers.Timer timer;
         object displayer;
-        GPIO out_beer;
+        GPIO out_alm_beer;
+        GPIO out_alm_green;
+        GPIO out_alm_yellow;
+        GPIO out_alm_red;
 
         public SYS_INF()
         {            
@@ -424,12 +423,16 @@ namespace MotionCtrl
         /// <param name="out_beer">蜂鸣器IO</param>
         /// <param name="maxbeeptime">最大蜂鸣时间</param>
         /// <returns></returns>
-        public EM_RES Init(object displayer, GPIO out_beer,  int maxbeeptime = 3000)
+        public EM_RES Init(object displayer, GPIO out_red, GPIO out_green,GPIO out_yellow , GPIO out_beer, int maxbeeptime = 3000)
         {
             if (displayer == null || out_beer == null) return EM_RES.PARA_ERR;
             this.displayer = displayer;
-            this.out_beer = out_beer;
+            this.out_alm_beer = out_beer;
             this.maxbeeptime = maxbeeptime;
+
+            this.out_alm_red = out_red;
+            this.out_alm_green = out_green;
+            this.out_alm_yellow = out_yellow;
 
             timer = new System.Timers.Timer(100);
             timer.Elapsed += new ElapsedEventHandler(timer_Elapsed);
@@ -447,10 +450,11 @@ namespace MotionCtrl
             }
             //beeper
             if (beeptimer < Math.Min(beeptime, maxbeeptime)) beeptimer++;
-            if (beeptimer == Math.Min(beeptime, maxbeeptime))
+            if (beeptimer >= Math.Min(beeptime, maxbeeptime))
             {
                 //避免打开软件初始化时，IO报警
-                if (out_beer != null && out_beer.card.isReady) out_beer.SetOff();
+                if (out_alm_beer != null && out_alm_beer.card.isReady) out_alm_beer.SetOff();
+                beeptime = 0;
                 beeptimer ++;
             }
         }
@@ -464,42 +468,42 @@ namespace MotionCtrl
         /// <param name="beep">蜂鸣时间</param>
         /// <param name="bset">强制更新</param>
         /// <param name="hit">提示</param>
-        public void Set(EM_ALM_STA alm_sta, string info, int beepTime = 100, bool bset = false,string hit ="")
+        public void Set(EM_ALM_STA alm_sta, string info, int beep = 100, bool bset = false,string hit ="")
         {
-            //仅仅设置状态
+            //设置状态
             if (bset)
             {
                 this.alm_sta = alm_sta;
                 this.info = info;
-                beepTime = 0;
+                
+               // beep = 0;
             }
             //等级更高的报警
-             if (alm_sta > EM_ALM_STA.WAR_YELLOW)
+            else if (alm_sta >= this.alm_sta)
             {
-                if (this.info == info)
+                if (this.info != info)
                 {
-                    // out_beer.SetOff();
-                    return;
+                    out_alm_beer.SetOn();
+                    beeptimer = 0;
                 }
-
                 this.alm_sta = alm_sta;
                 this.info = info;
             }
             //非报警状态
-            else if (alm_sta < EM_ALM_STA.WAR_YELLOW)
-            {
-                this.alm_sta = alm_sta;
-                this.info = info;
-            }
+            //else if (alm_sta < EM_ALM_STA.WAR_YELLOW)
+            //{
+            //    this.alm_sta = alm_sta;
+            //    this.info = info;
+            //}
 
             //蜂鸣
-            if (beepTime > 0)
+            if (beep > 0)
             {
                 //避免打开软件初始化时，IO报警
-                if (out_beer != null && out_beer.card.isReady)
+                if (out_alm_beer != null && out_alm_beer.card.isReady)
                 {
-                    out_beer.SetOn();
-                    beeptime = beepTime;
+                    out_alm_beer.SetOn();
+                    beeptime = beep;
                     beeptimer = 0;
                 }
                 return;
@@ -508,13 +512,13 @@ namespace MotionCtrl
             if (this.alm_sta >= EM_ALM_STA.WAR_YELLOW)//&& !VAR.inf_string.Contains("回零") && VAR.inf_string != "伺服失电")
             {
                 if (beeptimer < VAR.gsys_set.beep_tmr)
-                    out_beer.SetOn();
+                    out_alm_beer.SetOn();
             }
-            else if (alm_sta < EM_ALM_STA.WAR_YELLOW)
+            else if (this.alm_sta < EM_ALM_STA.WAR_YELLOW)
             {
-                if (out_beer != null )
-                out_beer.SetOff();
+                out_alm_beer.SetOff();
             }
+           
         }
         /// <summary>
         /// 设置系统状态显示
@@ -555,33 +559,53 @@ namespace MotionCtrl
         void showinf(object displayer)
         {
             Color cl = Color.GreenYellow;
+            GPIO io = null;
             switch (alm_sta)
             {
                 case EM_ALM_STA.NOR_GREEN:
+                    cl = Color.FromArgb(192, 255, 192);
+                    io = out_alm_green;
+                    bflash = false;
+                    break;
                 case EM_ALM_STA.NOR_BLUE:
                     cl = Color.GreenYellow;
+                    io = out_alm_green;
+                    bflash = false;
                     break;
                 case EM_ALM_STA.NOR_GREEN_FLASH:
+                    cl = Color.FromArgb(192, 255, 192); ;
+                    bflash = true;
+                    io = out_alm_green;
+                    break;
                 case EM_ALM_STA.NOR_BLUE_FLASH:
                     cl = Color.GreenYellow;
+                    io = out_alm_green;
                     bflash = true;
                     break;
                 case EM_ALM_STA.WAR_RED_FLASH:
                     bflash = true;
                     cl = Color.DarkOrange;
+                    io = out_alm_red;
                     break;
                 case EM_ALM_STA.WAR_RED:
                     cl = Color.DarkOrange;
+                    bflash = false;
+                    io = out_alm_red;
                     break;
                 case EM_ALM_STA.WAR_YELLOW_FLASH:
                     bflash = true;
                     cl = Color.Yellow;
+                    io = out_alm_yellow;
                     break;
                 case EM_ALM_STA.WAR_YELLOW:
                     cl = Color.Yellow;
+                    bflash = false;
+                    io = out_alm_yellow;
                     break;
                 default:
                     cl = Color.GreenYellow;
+                    bflash = false;
+                    io = out_alm_yellow;
                     break;
             }
             Type type = displayer.GetType();
@@ -596,6 +620,14 @@ namespace MotionCtrl
             {
                 obj.BackColor = cl;
             }
+
+            if(bflash)
+            {
+                if (io != null) io.Invert();                
+            }
+            //if (out_alm_red != null && io != null && io.id != out_alm_red.id) out_alm_red.SetOff();
+            if (out_alm_green != null && io != null && io.id != out_alm_green.id) out_alm_green.SetOff();
+            if (out_alm_yellow != null && io != null && io.id != out_alm_yellow.id) out_alm_yellow.SetOff();
         }
     }
 }

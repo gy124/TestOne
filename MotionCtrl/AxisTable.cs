@@ -13,14 +13,14 @@ namespace MotionCtrl
 {
     public partial class AxisTable : UserControl
     {
-        List<AXIS> list_ax = new List<AXIS>();
+        public List<AXIS> list_ax = new List<AXIS>();
 
         public AxisTable()
         {
             InitializeComponent();
             list_ax.Clear();
         }
-
+        
         private void FillTableWithAxisInf(AXIS ax, int row = -2)
         {
             if (ax == null || ax.mt_type == AXIS.MT_TYPE.NULL) return;
@@ -95,6 +95,8 @@ namespace MotionCtrl
             for (int r = 0; r < list_ax.Count; r++)
             {
                 FillTableWithAxisInf(list_ax.ElementAt(r), r);
+                Thread.Sleep(10);
+                Application.DoEvents();
             }
             dgv.Update();
         }
@@ -121,20 +123,12 @@ namespace MotionCtrl
             {
                 ret = ax.JOG_Step(ref VAR.gsys_set.bquit, AXIS.AX_DIR.N);
                 if (ret != EM_RES.OK) MessageBox.Show(ax.disc + "负向移动异常!");
-
             }
             //正向
             else if (e.ColumnIndex == 15)
             {
                 ret = ax.JOG_Step(ref VAR.gsys_set.bquit, AXIS.AX_DIR.P);
                 if (ret != EM_RES.OK) MessageBox.Show(ax.disc + "正向移动异常!");
-                //int i = 32;
-                //int m = 1;
-                //m = (i >> 5) & 1;
-                //i = m;
-                //m = (32 & 0x20);
-                //i = m;
-
             }
             //定位
             else if (e.ColumnIndex == 13)
@@ -143,8 +137,7 @@ namespace MotionCtrl
                 double pos = double.MaxValue;
                 try
                 {
-                    if (dgv.Rows[e.RowIndex].Cells[12].Value == null || dgv.Rows[e.RowIndex].Cells[12].Value.ToString().Length == 0)
-                        return;
+                    if (dgv.Rows[e.RowIndex].Cells[12].Value == null || dgv.Rows[e.RowIndex].Cells[12].Value.ToString().Length == 0) return;
                     pos = Convert.ToDouble(dgv.Rows[e.RowIndex].Cells[12].Value);
                 }
                 catch
@@ -159,9 +152,13 @@ namespace MotionCtrl
             }
             else if (e.ColumnIndex == 16)
             {
+                if (DialogResult.Yes != MessageBox.Show("是否执行回零操作!", "警告", MessageBoxButtons.YesNo, MessageBoxIcon.Warning))
+                {
+                    return;
+                }
                 VAR.gsys_set.bquit = false;
                 ax.HomeTask(20000);
-                while (VAR.gsys_set.bquit == false)
+                while (true)
                 {
                     if (ax.HomeTaskisEnd) break;
                     Thread.Sleep(10);
@@ -169,7 +166,10 @@ namespace MotionCtrl
                 }
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.DBG, string.Format("{0} end...", ax.disc));
                 if (ax.HomeTaskRet != EM_RES.OK)
+                {
+                    ax.Stop();
                     MessageBox.Show(ax.disc + "回零异常!");
+                }
                 else
                     MessageBox.Show(ax.disc + "回零成功!");
             }
@@ -183,6 +183,12 @@ namespace MotionCtrl
                 }
                 else ax.SVRON = true;
             }
+        }
+
+        private void dgv_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            if ((e.RowIndex & 1) == 1) e.CellStyle.BackColor = SystemColors.ButtonFace;
         }
     }
 }

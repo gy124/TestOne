@@ -65,6 +65,8 @@ namespace MotionCtrl
             this.slp = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.puls_per_mm = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.offset = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.pos0 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.pos1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tmr_update = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.dgv)).BeginInit();
             this.SuspendLayout();
@@ -191,7 +193,9 @@ namespace MotionCtrl
             this.sln,
             this.slp,
             this.puls_per_mm,
-            this.offset});
+            this.offset,
+            this.pos0,
+            this.pos1});
             dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle10.BackColor = System.Drawing.Color.Silver;
             dataGridViewCellStyle10.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
@@ -235,7 +239,7 @@ namespace MotionCtrl
             this.dgv.ShowEditingIcon = false;
             this.dgv.Size = new System.Drawing.Size(1078, 347);
             this.dgv.TabIndex = 0;
-            this.dgv.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_CellContentClick);
+            this.dgv.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.dgv_CellPainting);
             // 
             // axis
             // 
@@ -300,8 +304,8 @@ namespace MotionCtrl
             // 
             this.sln.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.sln.FillWeight = 10F;
-            this.sln.HeaderText = "负软限位";
-            this.sln.MinimumWidth = 80;
+            this.sln.HeaderText = "负限位";
+            this.sln.MinimumWidth = 70;
             this.sln.Name = "sln";
             this.sln.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.sln.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
@@ -310,8 +314,8 @@ namespace MotionCtrl
             // 
             this.slp.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.slp.FillWeight = 10F;
-            this.slp.HeaderText = "正软限位";
-            this.slp.MinimumWidth = 80;
+            this.slp.HeaderText = "正限位";
+            this.slp.MinimumWidth = 70;
             this.slp.Name = "slp";
             this.slp.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.slp.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
@@ -330,15 +334,22 @@ namespace MotionCtrl
             this.offset.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.offset.FillWeight = 10F;
             this.offset.HeaderText = "偏移";
-            this.offset.MinimumWidth = 80;
+            this.offset.MinimumWidth = 60;
             this.offset.Name = "offset";
             this.offset.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.offset.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
-            // tmr_update
+            // pos0
             // 
-            this.tmr_update.Interval = 300;
-            this.tmr_update.Tick += new System.EventHandler(this.tmr_update_Tick);
+            this.pos0.HeaderText = "位置0";
+            this.pos0.Name = "pos0";
+            this.pos0.Width = 60;
+            // 
+            // pos1
+            // 
+            this.pos1.HeaderText = "位置1";
+            this.pos1.Name = "pos1";
+            this.pos1.Width = 60;
             // 
             // AxisConfig
             // 
@@ -379,6 +390,8 @@ namespace MotionCtrl
         private System.Windows.Forms.DataGridViewTextBoxColumn slp;
         private System.Windows.Forms.DataGridViewTextBoxColumn puls_per_mm;
         private System.Windows.Forms.DataGridViewTextBoxColumn offset;
+        private System.Windows.Forms.DataGridViewTextBoxColumn pos0;
+        private System.Windows.Forms.DataGridViewTextBoxColumn pos1;
 
         #region 属性设定
 

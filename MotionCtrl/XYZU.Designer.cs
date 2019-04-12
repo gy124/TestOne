@@ -65,6 +65,7 @@
             0,
             0,
             -2147483648});
+            this.nud_u.ValueChanged += new System.EventHandler(this.nud_x_ValueChanged);
             // 
             // lb_u
             // 
@@ -99,6 +100,7 @@
             0,
             0,
             0});
+            this.nud_z.ValueChanged += new System.EventHandler(this.nud_x_ValueChanged);
             // 
             // lb_z
             // 
@@ -133,6 +135,7 @@
             0,
             0,
             0});
+            this.nud_y.ValueChanged += new System.EventHandler(this.nud_x_ValueChanged);
             // 
             // lb_y
             // 
@@ -167,6 +170,7 @@
             0,
             0,
             0});
+            this.nud_x.ValueChanged += new System.EventHandler(this.nud_x_ValueChanged);
             // 
             // lb_x
             // 
@@ -180,8 +184,7 @@
             // 
             // XYZU
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.Controls.Add(this.nud_u);
             this.Controls.Add(this.lb_u);
             this.Controls.Add(this.nud_z);

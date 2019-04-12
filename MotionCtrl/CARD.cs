@@ -7,6 +7,7 @@ using MotionCtrl;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
+using AZD;
 
 namespace MotionCtrl
 {
@@ -72,15 +73,28 @@ namespace MotionCtrl
         /// <summary>
         /// 卡描述
         /// </summary>
-        public string disc { get { return string.Format("{0}({1})", str_disc, ip.Length > 0 ? ip : card_id.ToString()); } }
+        public string disc
+        {
+            get
+            {
+                if (PortName.Length > 3 && Baudrate != 0)
+                {
+                    return string.Format("{0}({1}/{2})", str_disc, PortName, Baudrate);
+                }
+                else
+                {
+                    return string.Format("{0}({1})", str_disc, ip.Length > 0 ? ip : card_id.ToString());
+                }
+            }
+        }
         /// <summary>
         /// 品牌定义 雷赛，正运动，研华
         /// </summary>
-        public enum BRAND { LEADSHINE, ZMOTION, ADVANTTECH, GOOGOLTECH, NULL };
+        public enum BRAND { LEADSHINE, ZMOTION, ADVANTTECH, GOOGOLTECH, ORIENTALMOTOR, NULL };
         /// <summary>
         /// 板卡类型定义 运动板卡，IO板卡，CANIO扩展卡
         /// </summary>
-        public enum TYPE { MOTION, IO, CAN_IO, NULL };
+        public enum TYPE { MOTION, IO, CAN_IO, RS485, NULL };
         /// <summary>
         /// 板卡品牌
         /// </summary>
@@ -89,6 +103,14 @@ namespace MotionCtrl
         /// 板卡类型
         /// </summary>
         public TYPE type = TYPE.NULL;
+        /// <summary>
+        /// RS485 COM口名称
+        /// </summary>
+        public string PortName = "";
+        /// <summary>
+        /// RS485 COM波特率
+        /// </summary>
+        public int Baudrate;
         public List<AXIS> AxList = new List<AXIS>();
         public List<GPIO> GPIOList = new List<GPIO>();
 
@@ -121,7 +143,7 @@ namespace MotionCtrl
             if (!isReady || CardIOBuf == null) return EM_RES.ERR;
 
             //check time
-            if (!bforceupdate && Math.Abs(VAR.msg.sw.ElapsedMilliseconds - CardIOBuf.tickcnt) < 10)
+            if (!bforceupdate && Math.Abs(VAR.msg.sw.ElapsedMilliseconds - CardIOBuf.tickcnt) < 20)
                 return EM_RES.OK;
 
 #if ZMOTION
@@ -172,7 +194,7 @@ namespace MotionCtrl
         bool bshowmsg = false;
         #endregion
         #region 构造
-        public CARD(int id, int card_id, int ax_num, int input_num, int output_num, BRAND brand, TYPE type, string disc, string ps = "", int main_card_id = -1)
+        public CARD(int id, int card_id, int ax_num, int input_num, int output_num, BRAND brand, TYPE type, string disc, string ps = "")
         {
             this.m_id = id;
             this.card_id = card_id;
@@ -183,10 +205,8 @@ namespace MotionCtrl
             this.type = type;
             this.ps = ps;
             isInit = false;
-            handle = (IntPtr)0;//
+            handle = (IntPtr)0;
             str_disc = disc;
-            this.maincard_id = main_card_id;
-            
         }
         public CARD(int id, string ip, int ax_num, int input_num, int output_num, BRAND brand, TYPE type, string disc, string ps = "")
         {
@@ -201,6 +221,21 @@ namespace MotionCtrl
             isInit = false;
             handle = (IntPtr)0;
             str_disc = disc;
+        }
+        public CARD(int id, string port_name, int baudrate, BRAND brand, TYPE type, string disc, string ps = "")
+        {
+            this.m_id = id;
+            this.ax_num = 10000;
+            this.input_num = 10000;
+            this.output_num = 10000;
+            this.brand = brand;
+            this.type = type;
+            this.ps = ps;
+            isInit = false;
+            handle = (IntPtr)0;
+            str_disc = disc;
+            PortName = port_name;
+            Baudrate = baudrate;
         }
         #endregion
         #region 初始化
@@ -320,73 +355,6 @@ namespace MotionCtrl
 #endif
             }
 #endif
-
-
-#if GOOGOLTECH
-            if (brand == BRAND.GOOGOLTECH)
-            {
-                if (type == TYPE.MOTION)
-                {                    
-                    ret = mc.GT_Open((short)card_id, 0, 1);                   
-                    if (ret != 0)
-                    {
-                        isInit = false;                       
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}打开卡失败!0x{1:X8}", disc, ret));
-                        return EM_RES.ERR;
-                    }
-                    else
-                    {
-                        //download config
-                        res = DownLoadFile();
-                        if (res != EM_RES.OK)
-                        {
-                            return res;
-                        }
-                        isInit = true;
-                        handle = (IntPtr)1;
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, string.Format("{0}初始化成功!", disc));            
-                        ret = mc.GT_ClrSts((short)card_id, 1, 8);//清除限位和报警
-                        for (short i = 1; i <= 8; i++)
-                        {
-                            ret = mc.GT_AxisOn((short)card_id, i); //伺服on
-                            //   if(Result) return 1;
-                                                    
-                        }
-                        return EM_RES.OK;
-                    }
-
-
-                }
-                else if (type == TYPE.CAN_IO)
-                {
-                    ret = mc.GT_OpenExtMdl((short)maincard_id, "gts.dll");
-                    if (ret != 0)
-                    {
-                        isInit = false;
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}打开卡失败!0x{1:X8}", disc, ret));
-                        return EM_RES.ERR;
-                    }
-                    else
-                    {
-                        res = DownLoadFile();
-                        if (res != EM_RES.OK)
-                        {
-                            return res;
-                        }
-                        isInit = true;
-                        handle = (IntPtr)1;//用句柄显示状态
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, string.Format("{0}初始化成功!", disc));
-                        ret = 1;                      
-                        return EM_RES.OK;
-                    }
-                 
-
-                }
-
-            }
-
-#endif
-
 #if ZMOTION
             if (brand == BRAND.ZMOTION)
             {
@@ -400,13 +368,14 @@ namespace MotionCtrl
                 }
 
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, string.Format("{0} 连接...", disc));
-                //search and open
-                for (int n = 0; n < 10; n++)
-                {
-                    ret = zmcaux.ZAux_SearchEth(ip, 100);
-                    if (ret == 0) break;
-                    Application.DoEvents();
-                }
+                ////search and open,多网卡时，搜索异常
+                //for (int n = 0; n < 10; n++)
+                //{
+                //    ret = zmcaux.ZAux_SearchEth(ip, 100);
+                //    if (ret == 0) break;
+                //    Application.DoEvents();
+                //}
+                ret = 0;
                 if (ret == 0)
                 {
                     ret = zmcaux.ZAux_OpenEth(ip, out handle);
@@ -447,11 +416,13 @@ namespace MotionCtrl
                         return EM_RES.OK;
                     }
                 }
-
-                isInit = false;
-                handle = (IntPtr)0;
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}找不到，IP={1}", disc, ip));
-                return EM_RES.ERR;
+                else
+                {
+                    isInit = false;
+                    handle = (IntPtr)0;
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}找不到，IP={1}", disc, ip));
+                    return EM_RES.ERR;
+                }
             }
 #endif
 #if ADVANTTECH
@@ -462,11 +433,75 @@ namespace MotionCtrl
                 return EM_RES.ERR;
             }
 #endif
+#if ORIENTALMOTOR
+            if (brand == BRAND.ORIENTALMOTOR)
+            {
+                //get config
+                if (filename.Length < 3) filename = Path.GetFullPath("..") + "\\syscfg\\ORIENTALMOTOR.ini";
+                if (File.Exists(filename))
+                {
+                    IniFile inf = new IniFile(filename);
+                    int temp = inf.ReadInteger("COM", "PORT", -1);
+                    if (temp >= 0 && temp < 100) PortName = string.Format("COM{0}",temp);
+                    temp = inf.ReadInteger("COM", "BAUD", -1);
+                    if (temp > 0) Baudrate = temp;
+                }
+
+                if (0 == AZD.Motor.InitRs485(PortName, Baudrate))
+                {
+                    isInit = true;
+                    handle = (IntPtr)1;
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, string.Format("{0}初始化成功!", disc));
+                    foreach (AXIS ax in AxList)
+                    {
+                        ax.Init();
+                    }
+                    return EM_RES.OK;
+                }
+                else
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("InitRs485异常，BRAND={0}，TYPE={1},Port={2}/{3}", brand, type, PortName, Baudrate));
+                    return EM_RES.ERR;
+                }
+            }
+#endif
             VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("未定义异常，BRAND={0}，TYPE={1}", brand, type));
             return EM_RES.ERR;
         }
-
-
+        /// <summary>
+        /// 初始化板卡。
+        /// 如有主次卡之分，请先初始化主卡。关闭则相反，先关从卡再关主卡。
+        /// </summary>
+        /// <param name="id">卡ID</param>
+        /// <param name="filename">配置文件路径</param>
+        /// <returns></returns>
+        public EM_RES Init(int card_id, string filename = "")
+        {
+            return Init(card_id, -1, "", filename);
+        }
+        /// <summary>
+        /// 初始化板卡。
+        /// 如有主次卡之分，请先初始化主卡。关闭则相反，先关从卡再关主卡。
+        /// </summary>
+        /// <param name="ip">卡IP地址</param>
+        /// <param name="filename">配置文件路径</param>
+        /// <returns></returns>
+        public EM_RES Init(string ip, string filename = "")
+        {
+            return Init(-1, -1, ip, filename);
+        }
+        /// <summary>
+        /// 初始化板卡。
+        /// 如有主次卡之分，请先初始化主卡。关闭则相反，先关从卡再关主卡。
+        /// </summary>
+        /// <param name="id">卡ID</param>
+        /// <param name="maincard_id">主卡ID</param>
+        /// <param name="filename">配置文件路径</param>
+        /// <returns></returns>
+        public EM_RES Init(int card_id, int maincard_id, string filename = "")
+        {
+            return Init(card_id, maincard_id, "", filename);
+        }
         #endregion
         #region 下载参数
         public EM_RES DownLoadFile(string filename = "")
@@ -478,6 +513,7 @@ namespace MotionCtrl
             {
                 //download config
                 if (filename == "") filename = string.Format("{0}DMC3800_{1}.ini", Path.GetFullPath("..") + "\\syscfg\\", card_id);
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, String.Format("{0}下载配置,{1}", str_disc, filename));
                 ret = LTDMC.dmc_download_configfile((ushort)card_id, filename);
                 if (ret != 0)
                 {
@@ -489,88 +525,137 @@ namespace MotionCtrl
                 else VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, String.Format("{0}/id{1},更新配置成功！", disc, card_id));
             }
 #endif
-#if GOOGOLTECH
-            if (brand == BRAND.GOOGOLTECH)
-            {
-                if (type == TYPE.MOTION)
-                {
-                    //download config
-                    if (filename == "")
-                        filename = string.Format("{0}GTS800_{1}.cfg", Path.GetFullPath("..") + "\\syscfg\\", card_id);
-                    if (!File.Exists(filename))
-                    {
-                        isInit = false;
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0}/id{1},配置文件不存在！Err:0x{2:X8}", disc, card_id, ret));
-                        return EM_RES.ERR;
-                    }
-                    ret = mc.GT_LoadConfig((short)card_id, filename);
-                    if (ret != 0)
-                    {
-                        mc.GT_Close((short)card_id);
-                        isInit = false;
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0}/id{1},配置失败！Err:0x{2:X8}", disc, card_id, ret));
-                        return EM_RES.ERR;
-                    }
-                    else
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, String.Format("{0}/id{1},更新配置成功！", disc, card_id));
-                        return EM_RES.OK;
-                    }
-
-                }
-                else if (type == TYPE.CAN_IO)
-                {
-                    if (filename == "")
-                        filename = string.Format("{0}ExtMdl{1}.cfg", Path.GetFullPath("..") + "\\syscfg\\", maincard_id+1);
-
-                    if (!File.Exists(filename))
-                    {
-                        isInit = false;
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0}/id{1},配置文件不存在！Err:0x{2:X8}", disc, maincard_id+1, ret));
-                        return EM_RES.ERR;
-                    }
-                    ret = mc.GT_LoadExtConfig((short)maincard_id, filename);
-                    if (ret != 0)
-                    {
-                        mc.GT_CloseExtMdl((short)maincard_id);
-                        isInit = false;
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, String.Format("{0}/id{1},配置失败！Err:0x{2:X8}", disc, maincard_id+1, ret));
-                        return EM_RES.ERR;
-                    }
-                    else
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, String.Format("{0}/id{1},更新配置成功！", disc, maincard_id+1));
-                        return EM_RES.OK;
-                    }
-                }
-
-            }
-#endif
 #if ZMOTION
             if (brand == BRAND.ZMOTION)
             {
-                if (filename == "") filename = string.Format("{0}{1}_{2}.bas", Path.GetFullPath("..") + "\\syscfg\\", str_disc, id);
-                ret = zmcaux.ZAux_BasDown(handle, filename);
-                if (ret != 0)
+			    //下载时，容易引起程序丢失
+                //if (filename == "") filename = string.Format("{0}{1}_{2}.bas", Path.GetFullPath("..") + "\\syscfg\\", str_disc, id);
+                //VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, String.Format("{0}下载配置,{1}", str_disc, filename));
+                //ret = zmcaux.ZAux_BasDown(handle, filename);
+                //if (ret != 0)
+                //{
+                //    isInit = false;
+                //    zmcaux.ZAux_Close(handle);
+                //    handle = (IntPtr)0;
+                //    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 下载配置失败,Err:{1},{2}", disc, ret, filename));
+                //    return EM_RES.ERR;
+                //}
+                //else
+                //{
+                //    //set max_spd
+                //    foreach (AXIS ax in AxList)
+                //    {
+                //        zmcaux.ZAux_Direct_SetMaxSpeed(handle, ax.num, (int)(ax.max_spd * ax.pul_per_mm));
+                //        if (ret != 0)
+                //        {
+                //            VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 配置MAX_SPD失败,Err:{1}", disc, ret));
+                //        }
+                //    }
+                //    VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, String.Format("{0}/id{1},更新配置成功！", disc, id));
+                //}
+            }
+#endif
+#if ORIENTALMOTOR
+            if (brand == BRAND.ORIENTALMOTOR)
+            {
+                if (!Motor.isRs485Ready)
                 {
-                    isInit = false;
-                    zmcaux.ZAux_Close(handle);
-                    handle = (IntPtr)0;
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 下载配置失败,Err:{1},{2}", disc, ret, filename));
-                    return EM_RES.ERR;
+                    EM_RES res = Init();
+                    if (res != EM_RES.OK) return res;
                 }
-                else
+                VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, String.Format("{0}下载配置", str_disc));
+                foreach (AXIS ax in AxList)
                 {
-                    //set max_spd
-                    foreach (AXIS ax in AxList)
+                    UInt32 temp = 0;
+                    UInt32 temp2 = 0;
+                    ushort[] dat;
+                    bool bres = true;
+
+                    ////(ZHOME)•运行速度 688/689
+                    ////(ZHOME)•加减速 690/691
+                    //temp = (ushort)(ax.home_spd * ax.pul_per_mm);
+                    //temp2 = (ushort)(ax.tacc / 0.001);
+                    //dat = new ushort[4] { (ushort)(temp >> 16), (ushort)(temp & 0XFFFF), (ushort)(temp2 >> 16), (ushort)(temp2 & 0XFFFF) };
+                    //bres = ax.AzdMotor.WriteReg(688, dat);
+                    //if(!bres)
+                    //{
+                    //    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}设置运行速度/加速出错!",ax.disc));
+                    //    return EM_RES.ERR;
+                    //}
+                    ////SLN作为 原点/预置位置 908/909
+                    //temp = (ushort)(ax.sln * ax.pul_per_mm);
+                    //dat = new ushort[2] { (ushort)(temp >> 16), (ushort)(temp & 0XFFFF) };
+                    //bres = ax.AzdMotor.WriteReg(908, dat);
+                    //if (!bres)
+                    //{
+                    //    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}设置原点出错!", ax.disc));
+                    //    return EM_RES.ERR;
+                    //}
+
+                    //POS0点数据 1024/1025
+                    //POS1点数据 1026/1027
+                    temp = (ushort)(ax.pos0 * ax.pul_per_mm);
+                    temp2 = (ushort)(ax.pos1 * ax.pul_per_mm);
+                    dat = new ushort[4] { (ushort)(temp >> 16), (ushort)(temp & 0XFFFF), (ushort)(temp2 >> 16), (ushort)(temp2 & 0XFFFF) };
+                    bres = ax.AzdMotor.WriteReg(1024, dat);
+                    if (!bres)
                     {
-                        zmcaux.ZAux_Direct_SetMaxSpeed(handle, ax.num, (int)(ax.max_spd * ax.pul_per_mm));
-                        if (ret != 0)
-                        {
-                            VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 配置MAX_SPD失败,Err:{1}", disc, ret));
-                        }
-                    }
-                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, String.Format("{0}/id{1},更新配置成功！", disc, id));
+                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}设置POS0/POS1出错!", ax.disc));
+                        return EM_RES.ERR;
+                    }                    
+
+                    ////速度No.0 1152/1153
+                    ////速度No.1 1154/1155
+                    //temp = (ushort)(ax.spd_work * ax.pul_per_mm);
+                    //dat = new ushort[4] { (ushort)(temp >> 16), (ushort)(temp & 0XFFFF), (ushort)(temp >> 16), (ushort)(temp & 0XFFFF) };
+                    //bres = ax.AzdMotor.WriteReg(1152,dat);
+                    //if (!bres)
+                    //{
+                    //    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}设置速度0/速度1出错!", ax.disc));
+                    //    return EM_RES.ERR;
+                    //}
+
+                    ////方式No.0 1280/1281 1-绝对定位
+                    ////方式No.1 1282/1283 1-绝对定位
+                    //dat = new ushort[4] { 0, 1, 0, 1 };
+                    //bres = ax.AzdMotor.WriteReg(1280, dat);
+                    //if (!bres)
+                    //{
+                    //    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}设置定位方式0/1出错!", ax.disc));
+                    //    return EM_RES.ERR;
+                    //}
+
+                    ////加减速单位 654/655 0：•kHz/s• 1：•s• 2：•ms / kHz
+                    //dat = new ushort[2] { 0,1 };
+                    //bres = ax.AzdMotor.WriteReg(654, dat);
+                    //if (!bres)
+                    //{
+                    //    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}设置加减速单位出错!", ax.disc));
+                    //    return EM_RES.ERR;
+                    //}
+
+                    ////起动/变速No.0 1536/1537
+                    ////起动/变速No.1 1538/1539
+                    //temp = (ushort)(ax.tacc/0.001);
+                    //dat = new ushort[4] { (ushort)(temp >> 16), (ushort)(temp & 0XFFFF), (ushort)(temp >> 16), (ushort)(temp & 0XFFFF) };
+                    //bres = ax.AzdMotor.WriteReg(1536, dat);
+                    //if (!bres)
+                    //{
+                    //    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}设置加速度出错!", ax.disc));
+                    //    return EM_RES.ERR;
+                    //}
+
+                    ////停止No.0 1664/1665
+                    ////停止No.1 1666/1667
+                    //temp = (ushort)(ax.tdec / 0.001);
+                    //dat = new ushort[4] { (ushort)(temp >> 16), (ushort)(temp & 0XFFFF), (ushort)(temp >> 16), (ushort)(temp & 0XFFFF) };
+                    //bres = ax.AzdMotor.WriteReg(1664, dat);
+                    //if (!bres)
+                    //{
+                    //    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0}设置减速度出错!", ax.disc));
+                    //    return EM_RES.ERR;
+                    //}
+                    return EM_RES.OK;
                 }
             }
 #endif
@@ -589,24 +674,49 @@ namespace MotionCtrl
             if (brand == BRAND.LEADSHINE)
             {
                 if (isReady) return EM_RES.OK;
-                else return EM_RES.ERR;
             }
 #endif
 #if ZMOTION
             if (brand == BRAND.ZMOTION)
             {
                 //check on line
-                int ret = zmcaux.ZAux_SearchEth(ip, 1000);
+                if (((long)handle) == 0)
+                {
+                    if (bshowmsg) VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 掉线!", disc));
+                    bshowmsg = false;
+                    return res = EM_RES.ERR;                     
+                }
+                uint val = 0;
+                int ret = zmcaux.ZAux_Direct_GetIn(handle, 0,ref val);
                 if (ret != 0)
                 {
                     if (bshowmsg) VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 掉线!", disc));
+                    if (((long)handle) != 0) zmcaux.ZAux_Close(handle);
                     handle = (IntPtr)0;
                     bshowmsg = false;
+                    res = EM_RES.ERR;
                 }
                 else if (((long)handle) == 0)
                 {
                     bshowmsg = true;
-                    res = Init(-1,-1,ip, filename);
+                    res = Init(ip, filename);
+                }
+            }
+#endif
+#if ORIENTALMOTOR
+            if (brand == BRAND.ORIENTALMOTOR)
+            {
+                foreach (AXIS ax in AxList)
+                {
+                    ax.AzdMotor.ErrorCount = 0;
+                }
+                if (AZD.Motor.isRs485Ready) return res = EM_RES.OK;
+                else
+                {
+                    res = Init();
+                    return res;
+                    //res = EM_RES.ERR;
+                    //return res;
                 }
             }
 #endif
@@ -659,7 +769,6 @@ namespace MotionCtrl
                     return EM_RES.OK;
                 }
 #if LEADSHINE_IO
-
                 else if (type == TYPE.IO)
                 {
                     IOC0640.ioc_board_close();
@@ -670,59 +779,10 @@ namespace MotionCtrl
 #endif
             }
 #endif
-
-#if GOOGOLTECH
-            if (brand == BRAND.GOOGOLTECH)
-            {
-                if (type == TYPE.MOTION)
-                {
-                    //axis dec stop
-                    for (int n = 0; n < ax_num; n++)
-                    {
-                        mc.GT_Stop((short)card_id, 1 << n, (1 << n) & 0XFF);
-                        Thread.Sleep(10);
-                    }
-
-                    ret = mc.GT_Close((short)card_id);
-                    if (ret != 0)
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, string.Format("{0}关闭失败,Err:0x{1:X8}", disc, ret));
-                        return EM_RES.ERR;
-                    }
-                    else
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, string.Format("{0}关闭成功", disc));
-                        isInit = false;
-                        return EM_RES.OK;
-
-                    }
-
-                }
-                else if (type == TYPE.CAN_IO)
-                {
-                    ret = mc.GT_CloseExtMdl((short)maincard_id);
-                    if (ret != 0)
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, string.Format("{0}关闭失败,Err:0x{1:X8}", disc, ret));
-                        return EM_RES.ERR;
-                    }
-                    else
-                    {
-                        VAR.msg.AddMsg(Msg.EM_MSGTYPE.SYS, string.Format("{0}关闭成功", disc));
-                        isInit = false;
-                        return EM_RES.OK;
-                    }
-
-                }
-
-            }
-#endif
-
-
 #if ZMOTION
             if (brand == BRAND.ZMOTION)
             {
-                if ((int)handle != 0)
+                if (handle != (IntPtr)0)
                 {
                     ret = zmcaux.ZAux_Close(handle);
                     if (ret != 0)
@@ -744,6 +804,17 @@ namespace MotionCtrl
                 isInit = false;
                 VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, "研华库未添加!");
                 return EM_RES.ERR;
+            }
+#endif
+#if ORIENTALMOTOR
+            if (brand == BRAND.ORIENTALMOTOR)
+            {
+                if (AZD.Motor.Close())
+                {
+                    isInit = false;
+                    return EM_RES.OK;
+                }
+                else return EM_RES.ERR;
             }
 #endif
             VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("未定义异常，BRAND={0}，TYPE={1}", brand, type));
@@ -789,12 +860,17 @@ namespace MotionCtrl
         public EM_RES AllCardStop(int mode = 2)
         {
             if (!isReady) return EM_RES.ERR;
-            int ret = zmcaux.ZAux_Direct_Rapidstop(handle, mode);
-            if (ret != 0)
+#if ZMOTION
+            if (brand == BRAND.ZMOTION)
             {
-                VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 停止出错，ERR:{1}", disc, ret));
-                return EM_RES.ERR;
+                int ret = zmcaux.ZAux_Direct_Rapidstop(handle, mode);
+                if (ret != 0)
+                {
+                    VAR.msg.AddMsg(Msg.EM_MSGTYPE.ERR, string.Format("{0} 停止出错，ERR:{1}", disc, ret));
+                    return EM_RES.ERR;
+                }
             }
+#endif
             return EM_RES.OK;
         }
         #endregion
@@ -879,7 +955,7 @@ namespace MotionCtrl
 
             return EM_RES.OK;
 
-        MOVE_END:
+            MOVE_END:
             if (ax_x != null) ax_x.Stop();
             if (ax_y != null) ax_y.Stop();
             if (ax_z != null) ax_z.Stop();

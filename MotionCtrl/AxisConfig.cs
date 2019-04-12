@@ -42,6 +42,8 @@ namespace MotionCtrl
             dgv.Rows[row].Cells[8].Value = ax.slp.ToString("F0");
             dgv.Rows[row].Cells[9].Value = ax.pul_per_mm.ToString("F7");
             dgv.Rows[row].Cells[10].Value = ax.home_offset.ToString("F3");
+            dgv.Rows[row].Cells[11].Value = ax.pos0.ToString("F3");
+            dgv.Rows[row].Cells[12].Value = ax.pos1.ToString("F3");
         }
 
         public void AddAxis(AXIS ax)
@@ -127,6 +129,9 @@ namespace MotionCtrl
                             ax.slp = Convert.ToDouble(row.Cells[8].Value.ToString());
                             ax.pul_per_mm = Convert.ToDouble(row.Cells[9].Value.ToString());
                             ax.home_offset = Convert.ToDouble(row.Cells[10].Value.ToString());
+
+                            ax.pos0 = Convert.ToDouble(row.Cells[11].Value.ToString());
+                            ax.pos1 = Convert.ToDouble(row.Cells[12].Value.ToString());
                             break;
                         }
                     }
@@ -147,23 +152,20 @@ namespace MotionCtrl
             return true;
         }
 
-        public EM_RES  LoadFrFile(string filename = "")
+        public void LoadFrFile(string filename = "")
         {
             //save
-            EM_RES ret = EM_RES.OK;
             foreach (AXIS ax in list_ax)
             {
-              ret=  ax.LoadCfgFrInf(filename);
-                if (ret != EM_RES.OK)
-                    return ret;
+                ax.LoadCfgFrInf(filename);
             }
             UpdateShow();
-            return ret;
         }
 
-        private void dgv_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void dgv_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
-
+            if (e.RowIndex < 0) return;
+            if ((e.RowIndex & 1) == 1) e.CellStyle.BackColor = Color.WhiteSmoke;
         }
     }
 }

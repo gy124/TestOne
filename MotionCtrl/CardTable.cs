@@ -116,6 +116,8 @@ namespace MotionCtrl
             {
                 ret = list_card.ElementAt(e.RowIndex).Init();
                 if (ret != EM_RES.OK) MessageBox.Show(list_card.ElementAt(e.RowIndex).disc + "打开异常!Err:" + ret.ToString());
+               
+
             }
             //关闭
             else if (e.ColumnIndex == 10)
@@ -123,6 +125,12 @@ namespace MotionCtrl
                 ret = list_card.ElementAt(e.RowIndex).Close();
                 if (ret != EM_RES.OK) MessageBox.Show(list_card.ElementAt(e.RowIndex).disc + "关闭异常!Err:" + ret.ToString());
             }
+        }
+
+        private void dgv_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            if ((e.RowIndex & 1) == 1) e.CellStyle.BackColor = Color.WhiteSmoke;
         }
     }
 }

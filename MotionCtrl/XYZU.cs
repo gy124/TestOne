@@ -28,6 +28,22 @@ namespace MotionCtrl
         }
 
         [Browsable(true)]
+        [Description("TitleVisible")]
+        bool mbTitleVisible = true;
+        public bool TitleVisible
+        {
+            get { return mbTitleVisible; }
+            set
+            {
+                mbTitleVisible = value;
+                lb_x.Visible = mbTitleVisible;
+                lb_y.Visible = mbTitleVisible;
+                lb_z.Visible = mbTitleVisible;
+                lb_u.Visible = mbTitleVisible;
+            }
+        }
+
+        [Browsable(true)]
         [Description("XYZUVisible")]
         public String XYZUVisible
         {
@@ -40,10 +56,10 @@ namespace MotionCtrl
                 nud_z.Visible = Convert.ToBoolean(str[2]);
                 nud_u.Visible = Convert.ToBoolean(str[3]);
 
-                lb_x.Visible = nud_x.Visible;
-                lb_y.Visible = nud_y.Visible;
-                lb_z.Visible = nud_z.Visible;
-                lb_u.Visible = nud_u.Visible;
+                lb_x.Visible = nud_x.Visible && mbTitleVisible;
+                lb_y.Visible = nud_y.Visible && mbTitleVisible;
+                lb_z.Visible = nud_z.Visible && mbTitleVisible;
+                lb_u.Visible = nud_u.Visible && mbTitleVisible;
 
                 //重新排位
                 int w = 2;
@@ -140,6 +156,8 @@ namespace MotionCtrl
             set { nud_u.Value = (decimal)value; }
         }
 
+
+        public event EventHandler DataChanged;
         public XYZU()
         {
             InitializeComponent();
@@ -165,6 +183,12 @@ namespace MotionCtrl
                     MessageBox.Show(string.Format("{0}赋值异常,{1}", this.Name, ex.Message)); 
                 }
             }
+        }
+
+        private void nud_x_ValueChanged(object sender, EventArgs e)
+        {
+            if(DataChanged!=null)
+                DataChanged(sender, e);
         }
     }
 }

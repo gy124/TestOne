@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{51D49501-0CC0-4A83-99AB-BD2769A09F0B}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>clasp</RootNamespace>
+    <AssemblyName>clasp</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MotionCtrl, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\MotionCtrl\bin\MotionCtrl.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Class\Com.cs" />
+    <Compile Include="Class\MT.cs" />
+    <Compile Include="Class\Product.cs" />
+    <Compile Include="Compment\CTabControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="FormView\FrSys.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\FrSys.Designer.cs">
+      <DependentUpon>FrSys.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormView\FrRun.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\FrRun.Designer.cs">
+      <DependentUpon>FrRun.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormView\FrRst.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\FrRst.Designer.cs">
+      <DependentUpon>FrRst.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormView\FrMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\FrMain.Designer.cs">
+      <DependentUpon>FrMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormView\warning.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\warning.Designer.cs" />
+    <Compile Include="FormView\FrProduct.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\FrProduct.Designer.cs">
+      <DependentUpon>FrProduct.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormView\FrCount.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormView\FrCount.Designer.cs">
+      <DependentUpon>FrCount.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="FormView\FrSys.resx">
+      <DependentUpon>FrSys.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormView\FrMain.resx">
+      <DependentUpon>FrMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormView\FrProduct.resx">
+      <DependentUpon>FrProduct.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormView\FrRst.resx">
+      <DependentUpon>FrRst.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormView\FrRun.resx">
+      <DependentUpon>FrRun.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormView\warning.resx" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <None Include="Resources\下载.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

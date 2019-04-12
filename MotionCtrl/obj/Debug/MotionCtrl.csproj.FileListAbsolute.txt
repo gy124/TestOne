@@ -1,0 +1,265 @@
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\bin\MotionCtrl.dll
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\bin\MotionCtrl.pdb
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\bin\NModbus4.dll
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\bin\NModbus4.xml
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.dll
+D:\2018\WLTMini\code\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.pdb
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\bin\MotionCtrl.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\bin\MotionCtrl.pdb
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\bin\NModbus4.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\bin\NModbus4.xml
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.csprojResolveAssemblyReference.cache
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog\MotionCtrl\obj\Debug\MotionCtrl.pdb
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\bin\MotionCtrl.dll
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\bin\MotionCtrl.pdb
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\bin\NModbus4.dll
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\bin\NModbus4.xml
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.dll
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.pdb
+C:\Users\test\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.csprojResolveAssemblyReference.cache
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.csprojResolveAssemblyReference.cache
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\obj\Debug\MotionCtrl.pdb
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\bin\MotionCtrl.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\bin\MotionCtrl.pdb
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\bin\NModbus4.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog20181124\MotionCtrl\bin\NModbus4.xml
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\bin\MotionCtrl.dll
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\bin\MotionCtrl.pdb
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\bin\NModbus4.dll
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\bin\NModbus4.xml
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.dll
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.pdb
+C:\Users\Tony\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.csprojResolveAssemblyReference.cache
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\bin\MotionCtrl.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\bin\MotionCtrl.pdb
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\bin\NModbus4.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\bin\NModbus4.xml
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.csprojResolveAssemblyReference.cache
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog20181210\MotionCtrl\obj\Debug\MotionCtrl.pdb
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\bin\MotionCtrl.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\bin\MotionCtrl.pdb
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\bin\NModbus4.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\bin\NModbus4.xml
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.csprojResolveAssemblyReference.cache
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog20181211\MotionCtrl\obj\Debug\MotionCtrl.pdb
+D:\WLTmini_Cog20181212\MotionCtrl\bin\MotionCtrl.dll
+D:\WLTmini_Cog20181212\MotionCtrl\bin\MotionCtrl.pdb
+D:\WLTmini_Cog20181212\MotionCtrl\bin\NModbus4.dll
+D:\WLTmini_Cog20181212\MotionCtrl\bin\NModbus4.xml
+D:\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+D:\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+D:\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+D:\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+D:\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+D:\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+D:\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+D:\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+D:\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+D:\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+D:\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+D:\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.dll
+D:\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.pdb
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\bin\MotionCtrl.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\bin\MotionCtrl.pdb
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\bin\NModbus4.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\bin\NModbus4.xml
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.dll
+C:\Users\George Lin\Desktop\WLTmini_Cog20181212\MotionCtrl\obj\Debug\MotionCtrl.pdb
+D:\WLTmini_Cog20181226\MotionCtrl\bin\MotionCtrl.dll
+D:\WLTmini_Cog20181226\MotionCtrl\bin\MotionCtrl.pdb
+D:\WLTmini_Cog20181226\MotionCtrl\bin\NModbus4.dll
+D:\WLTmini_Cog20181226\MotionCtrl\bin\NModbus4.xml
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.dll
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.pdb
+D:\WLTmini_Cog20181226\MotionCtrl\obj\Debug\MotionCtrl.csprojResolveAssemblyReference.cache
+D:\WLTmini_Cog20190117\MotionCtrl\bin\MotionCtrl.dll
+D:\WLTmini_Cog20190117\MotionCtrl\bin\MotionCtrl.pdb
+D:\WLTmini_Cog20190117\MotionCtrl\bin\NModbus4.dll
+D:\WLTmini_Cog20190117\MotionCtrl\bin\NModbus4.xml
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.csprojResolveAssemblyReference.cache
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.dll
+D:\WLTmini_Cog20190117\MotionCtrl\obj\Debug\MotionCtrl.pdb
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\bin\MotionCtrl.pdb
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\bin\NModbus4.dll
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\bin\NModbus4.xml
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.csprojResolveAssemblyReference.cache
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.dll
+D:\WLT\WLTmini_Cog20190226\MotionCtrl\obj\Debug\MotionCtrl.pdb
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\bin\MotionCtrl.pdb
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\bin\NModbus4.dll
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\bin\NModbus4.xml
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.csprojResolveAssemblyReference.cache
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.dll
+E:\Working\Clasp2.0\Clasp2.0\Clasp\MotionCtrl\obj\Debug\MotionCtrl.pdb
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\bin\MotionCtrl.pdb
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\bin\NModbus4.dll
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\bin\NModbus4.xml
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.dll
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.pdb
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\bin\MotionCtrl.dll
+E:\Working\Clasp2.0\clasp0409\MotionCtrl\obj\Debug\MotionCtrl.csprojResolveAssemblyReference.cache
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\bin\MotionCtrl.dll
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\bin\MotionCtrl.pdb
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\bin\NModbus4.dll
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\bin\NModbus4.xml
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.csprojResolveAssemblyReference.cache
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.AxisConfig.resources
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.IOTable.resources
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.CylinderTable.resources
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.CardTable.resources
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.AxisTable.resources
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.IOPanel.resources
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.pad.resources
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.Properties.Resources.resources
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.User.resources
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.XYZU.resources
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.csproj.GenerateResource.Cache
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.dll
+E:\Working\Clasp2.0\clasp0409\UI\MotionCtrl\obj\Debug\MotionCtrl.pdb
